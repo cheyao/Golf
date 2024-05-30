@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(TileMap)
+project(Golf)
 
 if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/root/external/SDL3_image)
 	add_subdirectory(root/external/SDL3)

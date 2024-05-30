@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(TileMap CXX)
+project(Golf CXX)
 #CXX standards
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,25 +28,16 @@ src/game.cpp
 src/component.cpp
 src/actor.cpp
 src/spriteComponent.cpp
-src/tileMapComponent.cpp
-src/animSpriteComponent.cpp
 #Headers
 include/game.hpp
 include/common.hpp
 include/actor.hpp
 include/component.hpp
 include/spriteComponent.hpp
-include/tileMapComponent.hpp
-include/animSpriteComponent.hpp
 )
 
 set(ASSETS_EMBED_WEB
---embed-file=assets/MapLayer1.csv@/assets/MapLayer1.csv
---embed-file=assets/MapLayer2.csv@/assets/MapLayer2.csv
---embed-file=assets/MapLayer3.csv@/assets/MapLayer3.csv
---embed-file=assets/Tiles.png@/assets/Tiles.png
---embed-file=assets/rocket.png@/assets/rocket.png
---embed-file=assets/Head.png@/assets/Head.png
+# --embed-file=assets/Head.png@/assets/Head.png
 )
 
 #Check debug

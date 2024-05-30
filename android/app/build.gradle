@@ -9,7 +9,7 @@ else {
 
 android {
     if (buildAsApplication) {
-        namespace "org.cyao.tilemap"
+        namespace "org.cyao.golf"
     }
     compileSdkVersion 34
     defaultConfig {
@@ -58,7 +58,7 @@ android {
             variant.outputs.each { output ->
                 def outputFile = output.outputFile
                 if (outputFile != null && outputFile.name.endsWith(".aar")) {
-                    def fileName = "org.cyao.tilemap.aar";
+                    def fileName = "org.cyao.golf.aar";
                     output.outputFile = new File(outputFile.parent, fileName);
                 }
             }

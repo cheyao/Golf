@@ -12,6 +12,7 @@ option(CHECKS 		"Run checks" OFF)
 option(IWYU 		"Run include what you use" OFF)
 option(CLANG_TIDY 	"Run clang tidy" OFF)
 option(CPPCHECK 	"Run cppcheck" OFF)
+option(IMGUI 		"Include GUI" OFF)
 #CMAKE_BUILD_TYPE Release Debug
 
 if(CHECKS STREQUAL ON)
@@ -36,6 +37,16 @@ include/component.hpp
 include/spriteComponent.hpp
 )
 
+set(IMGUI_SRC
+# ImGUI 
+external/imgui/imgui.cpp
+external/imgui/imgui_draw.cpp
+external/imgui/imgui_tables.cpp
+external/imgui/imgui_widgets.cpp
+external/imgui/backends/imgui_impl_sdl3.cpp
+external/imgui/backends/imgui_impl_sdlrenderer3.cpp
+)
+
 set(ASSETS_EMBED_WEB
 # --embed-file=assets/Head.png@/assets/Head.png
 )
@@ -52,6 +63,9 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
 	message("Debug enabled")
 	set(DEBUG TRUE)
 	set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+	if(NOT CHECKS STREQUAL ON)
+		set(IMGUI ON)
+	endif()
 endif()
 
 #Check platform
@@ -76,15 +90,16 @@ include(CheckIPOSupported)
 check_ipo_supported(RESULT LTOSupported OUTPUT error)
 
 include_directories(include)
+
 if(NOT ANDROID)
 	if(WEB)
     		find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-static)
 		find_package(SDL3_image REQUIRED CONFIG REQUIRED COMPONENTS SDL3_image-static)
 
-		add_compile_options(-sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
-		add_compile_options(${ASSETS_EMBED_WEB})
-		add_link_options(-sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
-		add_link_options(${ASSETS_EMBED_WEB})
+		target_compile_options(-sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
+		target_compile_options(${ASSETS_EMBED_WEB})
+		target_link_options(-sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
+		target_link_options(${ASSETS_EMBED_WEB})
 
 		set(CMAKE_EXECUTABLE_SUFFIX .js)
 		
@@ -109,8 +124,6 @@ if (ANDROID)
 
 	add_library(${BUILD_NAME} SHARED ${SRC})
 
-	# target_sources(${BUILD_NAME} PRIVATE ${SRC})
-
 	target_link_libraries(${BUILD_NAME} PUBLIC SDL3::SDL3 SDL3_image::SDL3_image)
 elseif(MACOSX)
 	message("Building for MacOS")
@@ -132,7 +145,7 @@ elseif(MACOSX)
 	
 		file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/${BUILD_NAME}.app/Contents/Resources)
 
-		add_link_options(-headerpad_max_install_names)
+		target_link_options(${BUILD_NAME} PRIVATE -headerpad_max_install_names)
 
 		file(COPY cmake/mac-patch-dylib.sh DESTINATION ${CMAKE_BINARY_DIR}) # Helper script
 	endif()
@@ -144,12 +157,13 @@ elseif(WINDOWS)
 	add_executable(${BUILD_NAME} WIN32 ${SRC})
 	target_link_libraries(${BUILD_NAME} PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
 else()
-	message("Building for linux (probably)")
+	message("Building for linux")
 
 	add_executable(${BUILD_NAME} ${SRC})
 
 	target_link_libraries(${BUILD_NAME} PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
 endif()
+
 
 # Set flags
 if(MSVC)
@@ -163,10 +177,27 @@ if(MSVC)
 else()
 	if(DEBUG)
 		target_compile_options(${BUILD_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -g)
-		target_compile_definitions(${BUILD_NAME} PRIVATE -D_DEBUG)
+		target_compile_options(${BUILD_NAME} PRIVATE -D_DEBUG)
 	else()
 		target_compile_options(${BUILD_NAME} PRIVATE -O3)
 		target_compile_definitions(${BUILD_NAME} PRIVATE -DNDEBUG)
+	endif()
+endif()
+
+if(IMGUI STREQUAL ON AND CHECKS STREQUAL OFF)
+	message("Enabling IMGUI")
+
+	if(EXISTS external/imgui/backends)
+		message(FATAL_ERROR "Please run git submodule update --remote --init external/imgui")
+	endif()
+
+	target_sources(${BUILD_NAME} PRIVATE ${IMGUI_SRC})
+	include_directories(external/imgui)
+
+	if(MSVC)
+		target_compile_options(${BUILD_NAME} PRIVATE /DIMGUI)
+	else()
+		target_compile_options(${BUILD_NAME} PRIVATE -DIMGUI)
 	endif()
 endif()
 
@@ -190,15 +221,15 @@ if(CPPCHECK STREQUAL ON)
 	message("Running cppcheck")
 	find_program(CPPCHECK_EXE NAMES cppcheck REQUIRED)
 	set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-	set(CPPCHECK_COMMAND "${CPPCHECK_EXE}" "--enable=all" "--inconclusive" "--force" "--inline-suppr" "--suppressions-list=${CMAKE_SOURCE_DIR}/.cppcheck-ignore")
+	set(CPPCHECK_COMMAND "${CPPCHECK_EXE}" "--enable=all" "--inconclusive" "--force" "--inline-suppr" "--suppressions-list=${CMAKE_SOURCE_DIR}/.cppcheck-ignore" "-i${CMAKE_SOURCE_DIR}/external/")
 	set_target_properties(${BUILD_NAME} PROPERTIES CXX_CPPCHECK "${CPPCHECK_COMMAND}")
 endif()
 
 #Sanitize
 if(SANITIZE STREQUAL ON)
 	message("Sanitizer emabled")
-	add_compile_options(-fsanitize=address)
-	add_link_options(-fsanitize=address)
+	target_compile_options(-fsanitize=address)
+	target_link_options(-fsanitize=address)
 endif()
 
 #do LTO

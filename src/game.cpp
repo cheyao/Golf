@@ -8,6 +8,12 @@
 #include <iterator>
 #include <string>
 
+#ifdef IMGUI
+#include <backends/imgui_impl_sdl3.h>
+#include <backends/imgui_impl_sdlrenderer3.h>
+#include <imgui.h>
+#endif
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten/html5.h>
 
@@ -23,6 +29,7 @@ EM_JS(int, browserWidth, (), { return window.innerWidth; });
 Game::Game()
     : mWindow(nullptr),
       mRenderer(nullptr),
+      mUpdates(0),
       mUpdatingActors(false),
       mWindowWidth(1024),
       mWindowHeight(768) {}
@@ -30,7 +37,7 @@ Game::Game()
 int Game::init() {
 	SDL_Log("Initializing game\n");
 
-	if (SDL_Init(SDL_INIT_VIDEO)) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_TIMER )) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to init SDL: %s\n", SDL_GetError());
 		return 1;
@@ -42,17 +49,18 @@ int Game::init() {
 		return 1;
 	}
 
+	// This hint is for ImGUI
+	SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+
 	// Create window and Renderer
 #ifdef __EMSCRIPTEN__
 	// Hacks for EMSCRIPTEN Full screen
 	mWindowWidth = browserWidth();
 	mWindowHeight = browserHeight();
 
-	mWindow =
-	    SDL_CreateWindow("TileMap", mWindowWidth, mWindowHeight, SDL_WINDOW_RESIZABLE);
-#else
-	mWindow = SDL_CreateWindow("TileMap", 1024, 768, SDL_WINDOW_RESIZABLE);
 #endif
+	mWindow = SDL_CreateWindow("TileMap", mWindowWidth, mWindowHeight,
+				   SDL_WINDOW_RESIZABLE);
 	if (mWindow == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to create window: %s\n", SDL_GetError());
@@ -65,11 +73,23 @@ int Game::init() {
 			     "Failed to create renderer: %s", SDL_GetError());
 		return 1;
 	}
+	SDL_SetRenderVSync(mRenderer, 1);
 
-	// Make sure that the widnow can be resized
-	SDL_SetRenderLogicalPresentation(mRenderer, 1024, 768,
-					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
-					 SDL_SCALEMODE_NEAREST);
+#ifdef IMGUI
+	// Init ImGUI
+	SDL_Log("Initializing ImGUI");
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplSDL3_InitForSDLRenderer(mWindow, mRenderer);
+	ImGui_ImplSDLRenderer3_Init(mRenderer);
+	// Finished initializing ImGUI
+#endif
 
 	mTicks = SDL_GetTicks();
 
@@ -103,7 +123,8 @@ void Game::input() {
 void Game::update() {
 	// Hack for web window resizing
 #ifdef __EMSCRIPTEN__
-	if (browserWidth() != mWindowWidth || browserHeight() != mWindowHeight) {
+	if (browserWidth() != mWindowWidth ||
+	    browserHeight() != mWindowHeight) {
 		mWindowWidth = browserWidth();
 		mWindowHeight = browserHeight();
 
@@ -143,35 +164,97 @@ void Game::update() {
 	}
 }
 
+void Game::gui() {
+#ifdef IMGUI
+	// Update ImGui Frame
+	ImGui_ImplSDLRenderer3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Statistics");
+
+	ImGui::Text("Updated %ld times", mUpdates);
+
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate,
+		    io.Framerate);
+
+	ImGui::End();
+#endif
+}
+
 void Game::draw() {
+#ifdef IMGUI
+	ImGui::Render();
+#endif
+
 	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(mRenderer);
 
+
+	SDL_SetRenderLogicalPresentation(mRenderer, 1024, 768,
+					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
+					 SDL_SCALEMODE_NEAREST);
 	for (auto sprite : mSprites) {
 		sprite->draw(mRenderer);
 	}
+	SDL_SetRenderLogicalPresentation(mRenderer, mWindowWidth, mWindowHeight,
+					 SDL_LOGICAL_PRESENTATION_DISABLED,
+					 SDL_SCALEMODE_NEAREST);
+
+#ifdef IMGUI
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mRenderer);
+#endif
 
 	SDL_RenderPresent(mRenderer);
 }
 
 int Game::iterate() {
+	++mUpdates;
+
 	// Loop
 	input();
 	update();
+	gui();
 	draw();
 
 	return 0;
 }
 
 int Game::event(const SDL_Event& event) {
+	// Let ImGUI process the event first
+#ifdef IMGUI
+	ImGui_ImplSDL3_ProcessEvent(&event);
+#endif
+
 	switch (event.type) {
 		case SDL_EVENT_QUIT:
 			return 1;
 			break;
+
 		case SDL_EVENT_KEY_DOWN:
 			if (event.key.keysym.sym == SDLK_ESCAPE) {
 				return 1;
 			}
+
+			mKeyboard[event.key.keysym.sym] = true;
+
+			break;
+
+		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+			if (event.window.windowID == SDL_GetWindowID(mWindow)) {
+				return 1;
+			}
+
+			break;
+
+		case SDL_EVENT_KEY_UP:
+			mKeyboard[event.key.keysym.sym] = false;
+			break;
+
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+			break;
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 			break;
 	}
 
@@ -225,6 +308,12 @@ void Game::removeSprite(SpriteComponent* sprite) {
 
 Game::~Game() {
 	SDL_Log("Quitting game\n");
+
+#ifdef IMGUI
+	ImGui_ImplSDLRenderer3_Shutdown();
+	ImGui_ImplSDL3_Shutdown();
+	ImGui::DestroyContext();
+#endif
 
 	while (!mActors.empty()) {
 		delete mActors.back();

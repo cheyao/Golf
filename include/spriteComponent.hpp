@@ -10,7 +10,7 @@ class SpriteComponent : public Component {
        public:
 	// (Lower draw order corresponds with further back)
 	explicit SpriteComponent(class Actor* owner, int drawOrder = 100);
-	~SpriteComponent();
+	~SpriteComponent() override;
 
 	virtual void draw(SDL_Renderer* renderer);
 	virtual void setTexture(SDL_Texture* texture);

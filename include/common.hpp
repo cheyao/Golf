@@ -5,6 +5,12 @@
 #include <cmath>
 #include <SDL3/SDL.h>
 
+typedef struct TouchEvent {
+	int x, y;
+	int type;
+	int id;
+} TouchEvent;
+
 // Warper functins just incase we change platforms
 namespace maths {
 	const float PI = 3.14159265358979323846;

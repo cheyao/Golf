@@ -17,24 +17,19 @@ EM_JS(int, browserWidth, (), { return window.innerWidth; });
 #endif
 
 #include "actor.hpp"
-#include "animSpriteComponent.hpp"
 #include "common.hpp"
 #include "spriteComponent.hpp"
-#include "tileMapComponent.hpp"
 
 Game::Game()
     : mWindow(nullptr),
       mRenderer(nullptr),
-      mUpdatingActors(false)
-#ifdef __EMSCRIPTEN__
-      ,
-      mWidth(1024),
-      mHeight(768)
-#endif
-{
-}
+      mUpdatingActors(false),
+      mWindowWidth(1024),
+      mWindowHeight(768) {}
 
 int Game::init() {
+	SDL_Log("Initializing game\n");
+
 	if (SDL_Init(SDL_INIT_VIDEO)) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to init SDL: %s\n", SDL_GetError());
@@ -50,11 +45,11 @@ int Game::init() {
 	// Create window and Renderer
 #ifdef __EMSCRIPTEN__
 	// Hacks for EMSCRIPTEN Full screen
-	mWidth = browserWidth();
-	mHeight = browserHeight();
+	mWindowWidth = browserWidth();
+	mWindowHeight = browserHeight();
 
 	mWindow =
-	    SDL_CreateWindow("TileMap", mWidth, mHeight, SDL_WINDOW_RESIZABLE);
+	    SDL_CreateWindow("TileMap", mWindowWidth, mWindowHeight, SDL_WINDOW_RESIZABLE);
 #else
 	mWindow = SDL_CreateWindow("TileMap", 1024, 768, SDL_WINDOW_RESIZABLE);
 #endif
@@ -86,72 +81,9 @@ int Game::init() {
 	if (basepath == NULL) {
 		base = "";
 	} else {
-		base = static_cast<std::string>(basepath); 
-		SDL_free(basepath); // We gotta free da pointer UwU
+		base = static_cast<std::string>(basepath);
+		SDL_free(basepath);  // We gotta free da pointer UwU
 	}
-
-	SDL_Texture* tileMapTexture =
-	    IMG_LoadTexture(mRenderer, (base + "assets/Tiles.png").c_str());
-	if (tileMapTexture == nullptr) {
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			     "Failed to load tilemap texture: %s",
-			     IMG_GetError());
-		delete background;  // Potential memory leak
-		return 1;
-	}
-
-	// Layer 1
-	TileMapComponent* tileMap1 = new TileMapComponent(background);
-	tileMap1->setScreenSize(Vector2(1024, 768));
-	tileMap1->setTexture(tileMapTexture);
-	tileMap1->setDictionary("assets/MapLayer1.csv");
-	tileMap1->setScrollSpeed(300);
-
-	// Layer 2
-	TileMapComponent* tileMap2 = new TileMapComponent(background, 6);
-	tileMap2->setScreenSize(Vector2(1024, 768));
-	tileMap2->setTexture(tileMapTexture);
-	tileMap2->setDictionary("assets/MapLayer2.csv");
-	tileMap2->setScrollSpeed(200);
-
-	// Layer 3
-	TileMapComponent* tileMap3 = new TileMapComponent(background, 5);
-	tileMap3->setScreenSize(Vector2(1024, 768));
-	tileMap3->setTexture(tileMapTexture);
-	tileMap3->setDictionary("assets/MapLayer3.csv");
-	tileMap3->setScrollSpeed(100);
-
-	SDL_Texture* headTexture = IMG_LoadTexture(
-	    mRenderer,
-	    (base + "assets/Head.png")
-		.c_str());
-	if (headTexture == nullptr) {
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			     "Failed to load head texture: %s", IMG_GetError());
-		return 1;
-	}
-
-	Actor* head = new Actor(this);
-	head->setPosition(Vector2(100.f, 100.f));
-	SpriteComponent* sprite = new SpriteComponent(head);
-	sprite->setTexture(headTexture);
-
-	SDL_Texture* animationTexture = IMG_LoadTexture(
-	    mRenderer,
-	    (base + "assets/rocket.png")
-		.c_str());
-	if (animationTexture == nullptr) {
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			     "Failed to load rocket: %s", IMG_GetError());
-		return 1;
-	}
-
-	Actor* animation = new Actor(this);
-	animation->setPosition(Vector2(512.f, 344.f));
-	AnimSpriteComponent* animatedSprite =
-	    new AnimSpriteComponent(animation);
-	animatedSprite->setFrames(5);
-	animatedSprite->setTexture(animationTexture);
 
 	SDL_Log("Successfully initialized game\n");
 
@@ -171,11 +103,11 @@ void Game::input() {
 void Game::update() {
 	// Hack for web window resizing
 #ifdef __EMSCRIPTEN__
-	if (browserWidth() != mWidth || browserHeight() != mHeight) {
-		mWidth = browserWidth();
-		mHeight = browserHeight();
+	if (browserWidth() != mWindowWidth || browserHeight() != mWindowHeight) {
+		mWindowWidth = browserWidth();
+		mWindowHeight = browserHeight();
 
-		SDL_SetWindowSize(mWindow, mWidth, mHeight);
+		SDL_SetWindowSize(mWindow, mWindowWidth, mWindowHeight);
 	}
 #endif
 

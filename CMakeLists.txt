@@ -48,7 +48,7 @@ external/imgui/backends/imgui_impl_sdlrenderer3.cpp
 )
 
 set(ASSETS_EMBED_WEB
-# --embed-file=assets/Head.png@/assets/Head.png
+--embed-file=assets/Ball.png@/assets/Ball.png
 )
 
 #Check debug
@@ -95,11 +95,6 @@ if(NOT ANDROID)
 	if(WEB)
     		find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-static)
 		find_package(SDL3_image REQUIRED CONFIG REQUIRED COMPONENTS SDL3_image-static)
-
-		target_compile_options(-sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
-		target_compile_options(${ASSETS_EMBED_WEB})
-		target_link_options(-sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
-		target_link_options(${ASSETS_EMBED_WEB})
 
 		set(CMAKE_EXECUTABLE_SUFFIX .js)
 		
@@ -199,6 +194,13 @@ if(IMGUI STREQUAL ON AND CHECKS STREQUAL OFF)
 	else()
 		target_compile_options(${BUILD_NAME} PRIVATE -DIMGUI)
 	endif()
+endif()
+
+if(WEB)
+	target_compile_options(${BUILD_NAME} PRIVATE -sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
+	target_compile_options(${BUILD_NAME} PRIVATE ${ASSETS_EMBED_WEB})
+	target_link_options(${BUILD_NAME} PRIVATE -sUSE_SDL=3 -sUSE_SDL_IMAGE=3)
+	target_link_options(${BUILD_NAME} PRIVATE ${ASSETS_EMBED_WEB})
 endif()
 
 # IWYU

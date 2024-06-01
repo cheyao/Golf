@@ -43,7 +43,6 @@ class Game {
 	SDL_Window* mWindow;
 	SDL_Renderer* mRenderer;
 	Uint64 mTicks;
-	Uint64 mUpdates;
 
 	bool mUpdatingActors;
 

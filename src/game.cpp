@@ -29,7 +29,6 @@ EM_JS(int, browserWidth, (), { return window.innerWidth; });
 Game::Game()
     : mWindow(nullptr),
       mRenderer(nullptr),
-      mUpdates(0),
       mUpdatingActors(false),
       mWindowWidth(1024),
       mWindowHeight(768) {}
@@ -37,7 +36,7 @@ Game::Game()
 int Game::init() {
 	SDL_Log("Initializing game\n");
 
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_TIMER )) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_TIMER)) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to init SDL: %s\n", SDL_GetError());
 		return 1;
@@ -83,6 +82,7 @@ int Game::init() {
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.IniFilename = nullptr;
 
 	ImGui::StyleColorsDark();
 
@@ -93,9 +93,6 @@ int Game::init() {
 
 	mTicks = SDL_GetTicks();
 
-	Actor* background = new Actor(this);
-	background->setPosition(Vector2(0.f, 0.f));
-
 	char* basepath = SDL_GetBasePath();
 	std::string base;
 	if (basepath == NULL) {
@@ -104,6 +101,20 @@ int Game::init() {
 		base = static_cast<std::string>(basepath);
 		SDL_free(basepath);  // We gotta free da pointer UwU
 	}
+
+	Actor* ball = new Actor(this);
+	ball->setPosition(Vector2(200.f, 200.f));
+
+	SDL_Texture* ballTexture =
+	    IMG_LoadTexture(mRenderer, (base + "assets/Ball.png").c_str());
+	if (ballTexture == nullptr) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			     "Failed to load ball texture: %s", IMG_GetError());
+		delete ball;  // Potential memory leak
+		return 1;
+	}
+	SpriteComponent* ballSprite = new SpriteComponent(ball);
+	ballSprite->setTexture(ballTexture);
 
 	SDL_Log("Successfully initialized game\n");
 
@@ -164,6 +175,16 @@ void Game::update() {
 	}
 }
 
+#ifdef IMGUI
+// ImGUI private vars
+bool statisticsMenu = false;
+bool debugMenu = false;
+
+float mScale = 1.f;
+float x = 100, y = 100;
+bool vsync = true;
+#endif
+
 void Game::gui() {
 #ifdef IMGUI
 	// Update ImGui Frame
@@ -171,15 +192,43 @@ void Game::gui() {
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Statistics");
+	/* Main menu */ {
+		ImGui::Begin("Main menu");
 
-	ImGui::Text("Updated %ld times", mUpdates);
+		ImGui::Checkbox("Statistics", &statisticsMenu);
+		ImGui::Checkbox("Debug", &debugMenu);
 
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate,
-		    io.Framerate);
+		ImGui::End();
+	}
 
-	ImGui::End();
+	if (statisticsMenu) {
+		ImGui::Begin("Statistics", &statisticsMenu);
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
+			    1000.0f / io.Framerate, io.Framerate);
+		ImGui::Text("There is %ld actors", mActors.size());
+		ImGui::Text("There is %ld sprites", mSprites.size());
+
+		ImGui::End();
+	}
+
+	if (debugMenu) {
+		ImGui::Begin("Debug", &debugMenu);
+
+		ImGui::Checkbox("VSync", &vsync);
+		SDL_SetRenderVSync(mRenderer, vsync);
+
+		ImGui::SliderFloat("Ball size", &mScale, 0, 10);
+		ImGui::SliderFloat("Ball x", &x, 0, 1024);
+		ImGui::SliderFloat("Ball y", &y, 0, 768);
+		for (auto actor : mActors) {
+			actor->setScale(mScale);
+			actor->setPosition(Vector2(x, y));
+		}
+
+		ImGui::End();
+	}
 #endif
 }
 
@@ -191,17 +240,19 @@ void Game::draw() {
 	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(mRenderer);
 
-
+	// Set to 1024*768
 	SDL_SetRenderLogicalPresentation(mRenderer, 1024, 768,
 					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
 					 SDL_SCALEMODE_NEAREST);
+	SDL_RenderClear(mRenderer); // Somehow I need to clean the screen again
 	for (auto sprite : mSprites) {
 		sprite->draw(mRenderer);
 	}
+
+	// Back to normal
 	SDL_SetRenderLogicalPresentation(mRenderer, mWindowWidth, mWindowHeight,
 					 SDL_LOGICAL_PRESENTATION_DISABLED,
 					 SDL_SCALEMODE_NEAREST);
-
 #ifdef IMGUI
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mRenderer);
 #endif
@@ -210,8 +261,6 @@ void Game::draw() {
 }
 
 int Game::iterate() {
-	++mUpdates;
-
 	// Loop
 	input();
 	update();

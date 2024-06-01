@@ -30,12 +30,18 @@ src/game.cpp
 src/component.cpp
 src/actor.cpp
 src/spriteComponent.cpp
+src/movementComponent.cpp
+src/ball.cpp
+src/hole.cpp
 #Headers
 include/game.hpp
 include/common.hpp
 include/actor.hpp
 include/component.hpp
 include/spriteComponent.hpp
+include/movementComponent.hpp
+include/ball.hpp
+include/hole.hpp
 )
 
 set(IMGUI_SRC
@@ -50,6 +56,7 @@ external/imgui/backends/imgui_impl_sdlrenderer3.cpp
 
 set(ASSETS_EMBED_WEB
 --embed-file=assets/Ball.png@/assets/Ball.png
+--embed-file=assets/Hole.png@/assets/Hole.png
 )
 
 #Check debug

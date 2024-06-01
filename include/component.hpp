@@ -11,7 +11,7 @@ class Component {
 	virtual ~Component();
 
 	virtual void update(float delta);
-	virtual void input(const Uint8* keystate);
+	virtual void input();
 
 	int getUpdateOrder() const { return mUpdateOrder; }
 

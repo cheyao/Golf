@@ -18,8 +18,8 @@ class Actor {
 	void updateComponents(float delta);
 	virtual void updateActor(float delta);
 
-	void input(const Uint8* keystate);
-	virtual void actorInput(const Uint8* keystate);
+	void input();
+	virtual void actorInput();
 
 	class Game* getGame() { return mGame; }
 
@@ -35,6 +35,9 @@ class Actor {
 	State getState() const { return mState; }
 	void setState(State state) { mState = state; }
 
+	const Vector2& getForward() const { return mForward; }
+	void setForward(const Vector2 forward) { mForward = forward; }
+
 	void addComponent(class Component* component);
 	void removeComponent(class Component* component);
 
@@ -42,8 +45,9 @@ class Actor {
 	State mState;
 
 	Vector2 mPosition;
+	Vector2 mForward;
 	float mScale;
-	float mRotation;  // Radians
+	float mRotation; // Radians
 
 	std::vector<class Component*> mComponents;
 	class Game* mGame;

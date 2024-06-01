@@ -123,11 +123,9 @@ int Game::init() {
 }
 
 void Game::input() {
-	const Uint8* keystate = SDL_GetKeyboardState(NULL);
-
 	mUpdatingActors = true;
 	for (auto actor : mActors) {
-		actor->input(keystate);
+		actor->input();
 	}
 	mUpdatingActors = false;
 }
@@ -245,7 +243,7 @@ void Game::draw() {
 	SDL_SetRenderLogicalPresentation(mRenderer, 1024, 768,
 					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
 					 SDL_SCALEMODE_NEAREST);
-	SDL_RenderClear(mRenderer); // Somehow I need to clean the screen again
+	SDL_RenderClear(mRenderer);  // Somehow I need to clean the screen again
 	for (auto sprite : mSprites) {
 		sprite->draw(mRenderer);
 	}
@@ -262,7 +260,6 @@ void Game::draw() {
 }
 
 int Game::iterate() {
-
 	// Loop
 	input();
 	update();

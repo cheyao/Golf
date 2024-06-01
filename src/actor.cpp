@@ -6,7 +6,12 @@
 #include "game.hpp"
 
 Actor::Actor(Game* game)
-    : mState(STATE_ALIVE), mScale(1.0f), mRotation(0), mGame(game) {
+    : mState(STATE_ALIVE),
+      mPosition(Vector2(0.f, 0.f)),
+      mForward(Vector2(0.f, 0.f)),
+      mScale(1.0f),
+      mRotation(0),
+      mGame(game) {
 	mGame->addActor(this);
 }
 
@@ -33,18 +38,18 @@ void Actor::updateComponents(float delta) {
 
 void Actor::updateActor(float delta) { (void)delta; }
 
-void Actor::input(const Uint8* keystate) {
+void Actor::input() {
 	if (mState != STATE_ALIVE) {
 		return;
 	}
 
 	for (auto component : mComponents) {
-		component->input(keystate);
+		component->input();
 	}
-	actorInput(keystate);
+	actorInput();
 }
 
-void Actor::actorInput(const Uint8* keystate) { (void)keystate; }
+void Actor::actorInput() {}
 
 void Actor::addComponent(Component* component) {
 	int order = component->getUpdateOrder();

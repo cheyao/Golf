@@ -1,6 +1,7 @@
 #include "game.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_oldnames.h>
 #include <SDL3_image/SDL_image.h>
 #include <stddef.h>
 
@@ -183,6 +184,7 @@ bool debugMenu = false;
 float mScale = 1.f;
 float x = 100, y = 100;
 bool vsync = true;
+Uint64 frameTime = 0;
 #endif
 
 void Game::gui() {
@@ -205,10 +207,10 @@ void Game::gui() {
 		ImGui::Begin("Statistics", &statisticsMenu);
 
 		ImGuiIO& io = ImGui::GetIO();
-		ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
-			    1000.0f / io.Framerate, io.Framerate);
-		ImGui::Text("There is %ld actors", mActors.size());
-		ImGui::Text("There is %ld sprites", mSprites.size());
+		ImGui::Text("Average %zu ms/frame (%.1f FPS)",
+			    frameTime, io.Framerate);
+		ImGui::Text("There is %zu actors", mActors.size());
+		ImGui::Text("There is %zu sprites", mSprites.size());
 
 		ImGui::End();
 	}
@@ -261,12 +263,18 @@ void Game::draw() {
 }
 
 int Game::iterate() {
+#ifdef IMGUI
+	Uint64 framestart = SDL_GetTicks();
+#endif
 	// Loop
 	input();
 	update();
 	gui();
 	draw();
 
+#ifdef IMGUI
+	frameTime = (SDL_GetTicks() - framestart);
+#endif
 	return 0;
 }
 

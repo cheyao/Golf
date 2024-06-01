@@ -19,7 +19,6 @@ Actor::~Actor() {
 }
 
 void Actor::update(float delta) {
-	ZoneScoped;
 	if (mState == STATE_ALIVE) {
 		updateComponents(delta);
 		updateActor(delta);
@@ -35,7 +34,6 @@ void Actor::updateComponents(float delta) {
 void Actor::updateActor(float delta) { (void)delta; }
 
 void Actor::input(const Uint8* keystate) {
-	ZoneScoped;
 	if (mState != STATE_ALIVE) {
 		return;
 	}

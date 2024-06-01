@@ -6,7 +6,7 @@
 
 MovementComponent::MovementComponent(class Actor* owner, int updateOrder)
     : Component(owner, updateOrder),
-      mAngularSpeed(100.f),
+      mAngularSpeed(0.f),
       mForwardSpeed(100.f) {}
 
 void MovementComponent::update(float delta) {

@@ -5,7 +5,10 @@
 #include "actor.hpp"
 
 class Ball : public Actor {
-	Ball(class Game* game);
+       public:
+	explicit Ball(class Game* game);
+
+       private:
 };
 
 #endif

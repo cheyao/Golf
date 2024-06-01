@@ -1,13 +1,15 @@
 #include "game.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_oldnames.h>
 #include <SDL3_image/SDL_image.h>
 #include <stddef.h>
 
 #include <algorithm>
 #include <iterator>
 #include <string>
+#include <utility>
+
+#include "ball.hpp"
 
 #ifdef IMGUI
 #include <backends/imgui_impl_sdl3.h>
@@ -24,15 +26,17 @@ EM_JS(int, browserWidth, (), { return window.innerWidth; });
 #endif
 
 #include "actor.hpp"
-#include "common.hpp"
 #include "spriteComponent.hpp"
+
+#define TEXTURES_TO_LOAD "assets/Ball.png", "assets/Hole.png"
 
 Game::Game()
     : mWindow(nullptr),
       mRenderer(nullptr),
       mUpdatingActors(false),
       mWindowWidth(1024),
-      mWindowHeight(768) {}
+      mWindowHeight(768),
+      mBasePath("") {}
 
 int Game::init() {
 	SDL_Log("Initializing game\n");
@@ -95,27 +99,20 @@ int Game::init() {
 	mTicks = SDL_GetTicks();
 
 	char* basepath = SDL_GetBasePath();
-	std::string base;
-	if (basepath == NULL) {
-		base = "";
-	} else {
-		base = static_cast<std::string>(basepath);
+	if (basepath != NULL) {
+		mBasePath += basepath;
 		SDL_free(basepath);  // We gotta free da pointer UwU
 	}
 
-	Actor* ball = new Actor(this);
-	ball->setPosition(Vector2(200.f, 200.f));
-
-	SDL_Texture* ballTexture =
-	    IMG_LoadTexture(mRenderer, (base + "assets/Ball.png").c_str());
-	if (ballTexture == nullptr) {
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			     "Failed to load ball texture: %s", IMG_GetError());
-		delete ball;  // Potential memory leak
-		return 1;
+	const std::vector<std::string> texturesToLoad{TEXTURES_TO_LOAD};
+	for (const auto& texture : texturesToLoad) {
+		int response = loadTexture(texture);
+		if (response != 0) {
+			return 1;
+		}
 	}
-	SpriteComponent* ballSprite = new SpriteComponent(ball);
-	ballSprite->setTexture(ballTexture);
+
+	new Ball(this);
 
 	SDL_Log("Successfully initialized game\n");
 
@@ -124,7 +121,7 @@ int Game::init() {
 
 void Game::input() {
 	mUpdatingActors = true;
-	for (auto actor : mActors) {
+	for (auto& actor : mActors) {
 		actor->input();
 	}
 	mUpdatingActors = false;
@@ -151,7 +148,7 @@ void Game::update() {
 
 	// Update the Actors
 	mUpdatingActors = true;
-	for (auto actor : mActors) {
+	for (auto& actor : mActors) {
 		actor->update(delta);
 	}
 	mUpdatingActors = false;
@@ -169,7 +166,7 @@ void Game::update() {
 		     });
 
 	// Delete all the dead actors
-	for (auto actor : deadActors) {
+	for (auto& actor : deadActors) {
 		delete actor;
 	}
 }
@@ -206,8 +203,8 @@ void Game::gui() {
 		ImGuiIO& io = ImGui::GetIO();
 		ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
 			    (1000.f / io.Framerate), io.Framerate);
-		ImGui::Text("There is %zu actors", mActors.size());
-		ImGui::Text("There is %zu sprites", mSprites.size());
+		ImGui::Text("There are %zu actors", mActors.size());
+		ImGui::Text("There are %zu sprites", mSprites.size());
 
 		ImGui::End();
 	}
@@ -221,9 +218,13 @@ void Game::gui() {
 		ImGui::SliderFloat("Ball size", &mScale, 0, 10);
 		ImGui::SliderFloat("Ball x", &x, 0, 1024);
 		ImGui::SliderFloat("Ball y", &y, 0, 768);
-		for (auto actor : mActors) {
-			actor->setScale(mScale);
-			actor->setPosition(Vector2(x, y));
+		if (ImGui::Button("Set")) {
+			for (auto& actor : mActors) {
+				if (dynamic_cast<Ball*>(actor) != nullptr) {
+					actor->setScale(mScale);
+					actor->setPosition(Vector2(x, y));
+				}
+			}
 		}
 
 		ImGui::End();
@@ -244,7 +245,7 @@ void Game::draw() {
 					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
 					 SDL_SCALEMODE_NEAREST);
 	SDL_RenderClear(mRenderer);  // Somehow I need to clean the screen again
-	for (auto sprite : mSprites) {
+	for (auto& sprite : mSprites) {
 		sprite->draw(mRenderer);
 	}
 
@@ -257,6 +258,20 @@ void Game::draw() {
 #endif
 
 	SDL_RenderPresent(mRenderer);
+}
+
+int Game::loadTexture(const std::string& textureName) {
+	SDL_Texture* texture =
+	    IMG_LoadTexture(mRenderer, (mBasePath + textureName).c_str());
+	if (texture == nullptr) {
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			     "Failed to load ball texture: %s", IMG_GetError());
+		return 1;
+	}
+
+	mTextures[textureName] = texture;
+
+	return 0;
 }
 
 int Game::iterate() {
@@ -369,6 +384,12 @@ Game::~Game() {
 
 	while (!mPendingActors.empty()) {
 		delete mActors.back();
+	}
+
+	for (auto& texture : mTextures) {
+		if (texture.second != NULL) {
+			SDL_DestroyTexture(texture.second);
+		}
 	}
 
 	SDL_DestroyRenderer(mRenderer);

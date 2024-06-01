@@ -1,11 +1,12 @@
 #ifndef GAME_HPP
 #define GAME_HPP
-#include <list>
-#include <unordered_map>
 #pragma once
 
 #include <SDL3/SDL.h>
 
+#include <list>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "common.hpp"
@@ -25,6 +26,10 @@ class Game {
 	void addSprite(class SpriteComponent* sprite);
 	void removeSprite(class SpriteComponent* sprite);
 
+	SDL_Texture* getTexture(const std::string& path) {
+		return mTextures[path];
+	}
+
 	// No copy
 	Game(Game const&) = delete;
 	void operator=(Game const& x) = delete;
@@ -32,8 +37,9 @@ class Game {
        private:
 	void input();
 	void update();
-	void draw();
 	void gui();
+	void draw();
+	int loadTexture(const std::string& textureName);
 
 	std::vector<class Actor*> mActors;
 	std::vector<class Actor*> mPendingActors;
@@ -49,7 +55,10 @@ class Game {
 	int mWindowWidth, mWindowHeight;
 
 	std::unordered_map<int, bool> mKeyboard;
+	std::unordered_map<std::string, SDL_Texture*> mTextures;
 	std::list<TouchEvent> mTouchEvents;
+
+	std::string mBasePath;
 };
 
 #endif	// GAME_HPP

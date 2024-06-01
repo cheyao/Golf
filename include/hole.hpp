@@ -5,7 +5,10 @@
 #include "actor.hpp"
 
 class Hole : public Actor {
-	Hole(Game*);
+       public:
+	explicit Hole(class Game*);
+
+       private:
 };
 
-#endif // HOLE_HPP
+#endif	// HOLE_HPP

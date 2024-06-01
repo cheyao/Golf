@@ -2,8 +2,6 @@
 #define COMPONENT_HPP
 #pragma once
 
-#include <SDL3/SDL.h>
-
 class Component {
        public:
 	// (the lower the update order, the earlier the component updates)

@@ -2,11 +2,6 @@
 
 #include <algorithm>
 
-#ifdef TRACY
-#define TRACY_ENABLE
-#endif
-#include <Tracy.hpp>
-
 #include "component.hpp"
 #include "game.hpp"
 

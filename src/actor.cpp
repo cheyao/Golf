@@ -2,10 +2,16 @@
 
 #include <algorithm>
 
+#ifdef TRACY
+#define TRACY_ENABLE
+#endif
+#include <Tracy.hpp>
+
 #include "component.hpp"
 #include "game.hpp"
 
-Actor::Actor(Game* game) : mState(STATE_ALIVE), mScale(1.0f), mRotation(0), mGame(game) {
+Actor::Actor(Game* game)
+    : mState(STATE_ALIVE), mScale(1.0f), mRotation(0), mGame(game) {
 	mGame->addActor(this);
 }
 
@@ -18,6 +24,7 @@ Actor::~Actor() {
 }
 
 void Actor::update(float delta) {
+	ZoneScoped;
 	if (mState == STATE_ALIVE) {
 		updateComponents(delta);
 		updateActor(delta);
@@ -30,9 +37,10 @@ void Actor::updateComponents(float delta) {
 	}
 }
 
-void Actor::updateActor(float delta) { (void) delta; }
+void Actor::updateActor(float delta) { (void)delta; }
 
 void Actor::input(const Uint8* keystate) {
+	ZoneScoped;
 	if (mState != STATE_ALIVE) {
 		return;
 	}
@@ -43,7 +51,7 @@ void Actor::input(const Uint8* keystate) {
 	actorInput(keystate);
 }
 
-void Actor::actorInput(const Uint8* keystate) { (void) keystate; }
+void Actor::actorInput(const Uint8* keystate) { (void)keystate; }
 
 void Actor::addComponent(Component* component) {
 	int order = component->getUpdateOrder();

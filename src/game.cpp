@@ -262,6 +262,7 @@ void Game::draw() {
 }
 
 int Game::iterate() {
+
 	// Loop
 	input();
 	update();

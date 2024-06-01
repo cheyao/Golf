@@ -13,6 +13,7 @@ option(IWYU 		"Run include what you use" OFF)
 option(CLANG_TIDY 	"Run clang tidy" OFF)
 option(CPPCHECK 	"Run cppcheck" OFF)
 option(IMGUI 		"Include GUI" OFF)
+option(TRACY 		"Include Tracy" OFF)
 #CMAKE_BUILD_TYPE Release Debug
 
 if(CHECKS STREQUAL ON)
@@ -194,6 +195,26 @@ if(IMGUI STREQUAL ON AND CHECKS STREQUAL OFF)
 	else()
 		target_compile_options(${BUILD_NAME} PRIVATE -DIMGUI)
 	endif()
+endif()
+
+if(TRACY STREQUAL ON)
+	message("Enabling tracy")
+
+	if(EXISTS external/tracy/public)
+		message(FATAL_ERROR "Please run git submodule update --remote --init external/trancy")
+	endif()
+
+	# target_link_libraries(${BUILD_NAME} PRIVATE external/tracy/public/TracyClient.cpp)
+	target_link_libraries(${BUILD_NAME} PRIVATE -ltracy)
+	include_directories(external/tracy/public/tracy)
+
+	if(MSVC)
+		target_compile_options(${BUILD_NAME} PRIVATE /DTRACY)
+	else()
+		target_compile_options(${BUILD_NAME} PRIVATE -DTRACY)
+	endif()
+else()
+	include_directories(external/tr)
 endif()
 
 if(WEB)

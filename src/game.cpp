@@ -1,6 +1,8 @@
 #include "game.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_messagebox.h>
 #include <SDL3_image/SDL_image.h>
 #include <stddef.h>
 
@@ -10,6 +12,7 @@
 #include <utility>
 
 #include "ball.hpp"
+#include "common.hpp"
 
 #ifdef IMGUI
 #include <backends/imgui_impl_sdl3.h>
@@ -44,12 +47,21 @@ int Game::init() {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_TIMER)) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to init SDL: %s\n", SDL_GetError());
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR!",
+					 "Failed to initialize SDL, there is "
+					 "something wrong with your system",
+					 NULL);
 		return 1;
 	}
 
 	if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to init SDL_image: %s\n", SDL_GetError());
+		SDL_ShowSimpleMessageBox(
+		    SDL_MESSAGEBOX_ERROR, "ERROR!",
+		    "Failed to initialize SDL_image, there is "
+		    "something wrong with your system",
+		    NULL);
 		return 1;
 	}
 
@@ -62,6 +74,7 @@ int Game::init() {
 	mWindowWidth = browserWidth();
 	mWindowHeight = browserHeight();
 
+	SDL_Log("The web window is %dx%d", mWindowWidth, mWindowHeight);
 #endif
 	mWindow = SDL_CreateWindow("TileMap", mWindowWidth, mWindowHeight,
 				   SDL_WINDOW_RESIZABLE);
@@ -82,6 +95,7 @@ int Game::init() {
 #ifdef IMGUI
 	// Init ImGUI
 	SDL_Log("Initializing ImGUI");
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -93,7 +107,8 @@ int Game::init() {
 
 	ImGui_ImplSDL3_InitForSDLRenderer(mWindow, mRenderer);
 	ImGui_ImplSDLRenderer3_Init(mRenderer);
-	// Finished initializing ImGUI
+
+	SDL_Log("Finished Initializing ImGUI");
 #endif
 
 	mTicks = SDL_GetTicks();
@@ -107,8 +122,9 @@ int Game::init() {
 	const std::vector<std::string> texturesToLoad{TEXTURES_TO_LOAD};
 	for (const auto& texture : texturesToLoad) {
 		int response = loadTexture(texture);
+
 		if (response != 0) {
-			return 1;
+			return response;
 		}
 	}
 
@@ -151,9 +167,7 @@ void Game::update() {
 	for (auto& actor : mActors) {
 		actor->update(delta);
 	}
-	mUpdatingActors = false;
-
-	// Append the pending actors
+	mUpdatingActors = false;  // Append the pending actors
 	std::copy(mPendingActors.begin(), mPendingActors.end(),
 		  std::back_inserter(mActors));
 	mPendingActors.clear();
@@ -205,6 +219,7 @@ void Game::gui() {
 			    (1000.f / io.Framerate), io.Framerate);
 		ImGui::Text("There are %zu actors", mActors.size());
 		ImGui::Text("There are %zu sprites", mSprites.size());
+		ImGui::Text("There are %zu touch events", mTouchEvents.size());
 
 		ImGui::End();
 	}
@@ -265,7 +280,11 @@ int Game::loadTexture(const std::string& textureName) {
 	    IMG_LoadTexture(mRenderer, (mBasePath + textureName).c_str());
 	if (texture == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-			     "Failed to load ball texture: %s", IMG_GetError());
+			     "Failed to load texture: %s", IMG_GetError());
+		SDL_ShowSimpleMessageBox(
+		    SDL_MESSAGEBOX_ERROR, "ERROR!",
+		    "Failed to load one texture.",
+		    mWindow);
 		return 1;
 	}
 
@@ -291,34 +310,64 @@ int Game::event(const SDL_Event& event) {
 #endif
 
 	switch (event.type) {
-		case SDL_EVENT_QUIT:
+		case SDL_EVENT_QUIT: {
 			return 1;
 			break;
+		}
 
-		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+			if (event.window.windowID == SDL_GetWindowID(mWindow)) {
+				return 1;
+			}
+			break;
+		}
+
+		case SDL_EVENT_KEY_DOWN: {
 			if (event.key.keysym.sym == SDLK_ESCAPE) {
 				return 1;
 			}
 
 			mKeyboard[event.key.keysym.sym] = true;
-
 			break;
+		}
 
-		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-			if (event.window.windowID == SDL_GetWindowID(mWindow)) {
-				return 1;
-			}
-
-			break;
-
-		case SDL_EVENT_KEY_UP:
+		case SDL_EVENT_KEY_UP: {
 			mKeyboard[event.key.keysym.sym] = false;
 			break;
+		}
 
-		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_WINDOW_RESIZED: {
+			mWindowWidth = event.window.data1;
+			mWindowHeight = event.window.data2;
 			break;
-		case SDL_EVENT_MOUSE_BUTTON_UP:
+		}
+		case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+			if (event.button.windowID != SDL_GetWindowID(mWindow)) {
+				break;
+			}
+
+			TouchEvent* touchEvent = new TouchEvent;
+			touchEvent->type = TouchEvent::TYPE_MOUSE;
+			touchEvent->id = event.button.which;
+			touchEvent->x = event.button.x * 1024 / mWindowWidth;
+			touchEvent->y = event.button.x * 1024 / mWindowHeight;
+
+			mTouchEvents.push_back(touchEvent);
 			break;
+		}
+
+		case SDL_EVENT_MOUSE_BUTTON_UP: {
+			for (auto iter = mTouchEvents.begin();
+			     iter != mTouchEvents.end(); iter++) {
+				if ((*iter)->id == event.button.which &&
+				    (*iter)->type == TouchEvent::TYPE_MOUSE) {
+					delete (*iter);
+					mTouchEvents.erase(iter);
+					break;
+				}
+			}
+			break;
+		}
 	}
 
 	return 0;
@@ -336,7 +385,9 @@ void Game::removeActor(Actor* actor) {
 	auto iter =
 	    std::find(mPendingActors.begin(), mPendingActors.end(), actor);
 	if (iter != mPendingActors.end()) {
-		// Swap to end of vector and pop off (avoid erase copies)
+		// Swap to end of vector
+		// and pop off (avoid
+		// erase copies)
 		std::iter_swap(iter, mPendingActors.end() - 1);
 		mPendingActors.pop_back();
 	}
@@ -344,7 +395,9 @@ void Game::removeActor(Actor* actor) {
 	// Is it in actors?
 	iter = std::find(mActors.begin(), mActors.end(), actor);
 	if (iter != mActors.end()) {
-		// Swap to end of vector and pop off (avoid erase copies)
+		// Swap to end of vector
+		// and pop off (avoid
+		// erase copies)
 		std::iter_swap(iter, mActors.end() - 1);
 		mActors.pop_back();
 	}
@@ -362,8 +415,10 @@ void Game::addSprite(SpriteComponent* sprite) {
 
 	mSprites.insert(iter, sprite);
 }
+
 void Game::removeSprite(SpriteComponent* sprite) {
 	auto iter = std::find(mSprites.begin(), mSprites.end(), sprite);
+
 	if (iter != mSprites.end()) {
 		mSprites.erase(iter);
 	}
@@ -384,6 +439,10 @@ Game::~Game() {
 
 	while (!mPendingActors.empty()) {
 		delete mActors.back();
+	}
+
+	while (!mTouchEvents.empty()) {
+		delete mTouchEvents.back();
 	}
 
 	for (auto& texture : mTextures) {

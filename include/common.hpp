@@ -7,8 +7,11 @@
 
 typedef struct TouchEvent {
 	int x, y;
-	int type;
-	int id;
+	enum {
+		TYPE_MOUSE,
+		TYPE_FINGER
+	} type;
+	unsigned int id;
 } TouchEvent;
 
 // Warper functins just incase we change platforms

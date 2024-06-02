@@ -56,7 +56,7 @@ class Game {
 
 	std::unordered_map<int, bool> mKeyboard;
 	std::unordered_map<std::string, SDL_Texture*> mTextures;
-	std::list<TouchEvent> mTouchEvents;
+	std::list<TouchEvent*> mTouchEvents;
 
 	std::string mBasePath;
 };

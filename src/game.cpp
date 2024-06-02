@@ -97,7 +97,7 @@ int Game::init() {
 	// Set to 1024*768
 	SDL_SetRenderLogicalPresentation(mRenderer, 1024, 768,
 					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
-					 SDL_SCALEMODE_NEAREST);
+					 SDL_SCALEMODE_BEST);
 #ifdef IMGUI
 	// Init ImGUI
 	SDL_Log("Initializing ImGUI");
@@ -255,9 +255,6 @@ void Game::gui() {
 
 		ImGui::End();
 	}
-
-	ImGui::ShowIDStackToolWindow();
-	ImGui::ShowMetricsWindow();
 #endif
 }
 

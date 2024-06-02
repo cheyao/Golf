@@ -31,6 +31,7 @@ src/component.cpp
 src/actor.cpp
 src/spriteComponent.cpp
 src/circleComponent.cpp
+src/flingComponent.cpp
 src/movementComponent.cpp
 src/ball.cpp
 src/hole.cpp
@@ -41,6 +42,7 @@ include/actor.hpp
 include/component.hpp
 include/spriteComponent.hpp
 include/circleComponent.hpp
+include/flingComponent.hpp
 include/movementComponent.hpp
 include/ball.hpp
 include/hole.hpp

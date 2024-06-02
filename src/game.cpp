@@ -1,6 +1,7 @@
 #include "game.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3_image/SDL_image.h>
 #include <stddef.h>
 
@@ -93,6 +94,10 @@ int Game::init() {
 	}
 	SDL_SetRenderVSync(mRenderer, 1);
 
+	// Set to 1024*768
+	SDL_SetRenderLogicalPresentation(mRenderer, 1024, 768,
+					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
+					 SDL_SCALEMODE_NEAREST);
 #ifdef IMGUI
 	// Init ImGUI
 	SDL_Log("Initializing ImGUI");
@@ -138,7 +143,6 @@ int Game::init() {
 	hole->setPosition(Vector2(200.f, 200.f));
 
 	SDL_Log("Successfully initialized game\n");
-
 	return 0;
 }
 
@@ -251,6 +255,9 @@ void Game::gui() {
 
 		ImGui::End();
 	}
+
+	ImGui::ShowIDStackToolWindow();
+	ImGui::ShowMetricsWindow();
 #endif
 }
 
@@ -262,19 +269,10 @@ void Game::draw() {
 	SDL_SetRenderDrawColor(mRenderer, 83, 252, 227, 255);
 	SDL_RenderClear(mRenderer);
 
-	// Set to 1024*768
-	SDL_SetRenderLogicalPresentation(mRenderer, 1024, 768,
-					 SDL_LOGICAL_PRESENTATION_LETTERBOX,
-					 SDL_SCALEMODE_NEAREST);
-	SDL_RenderClear(mRenderer);  // Somehow I need to clean the screen again
 	for (auto& sprite : mSprites) {
 		sprite->draw(mRenderer);
 	}
 
-	// Back to normal
-	SDL_SetRenderLogicalPresentation(mRenderer, mWindowWidth, mWindowHeight,
-					 SDL_LOGICAL_PRESENTATION_DISABLED,
-					 SDL_SCALEMODE_NEAREST);
 #ifdef IMGUI
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mRenderer);
 #endif
@@ -309,12 +307,15 @@ int Game::iterate() {
 	return 0;
 }
 
-int Game::event(const SDL_Event& event) {
-	// Let ImGUI process the event first
+int Game::event(const SDL_Event& constEvent) {
+	SDL_Event event = constEvent;
+	SDL_ConvertEventToRenderCoordinates(mRenderer, &event);
+
 #ifdef IMGUI
 	ImGui_ImplSDL3_ProcessEvent(&event);
 #endif
 
+	ImGuiIO& io = ImGui::GetIO();
 	switch (event.type) {
 		case SDL_EVENT_QUIT: {
 			return 1;
@@ -329,11 +330,19 @@ int Game::event(const SDL_Event& event) {
 		}
 
 		case SDL_EVENT_KEY_DOWN: {
+			if (io.WantCaptureKeyboard) {
+				break;
+			}
+
 			mKeyboard[event.key.keysym.sym] = true;
 			break;
 		}
 
 		case SDL_EVENT_KEY_UP: {
+			if (io.WantCaptureKeyboard) {
+				break;
+			}
+
 			mKeyboard[event.key.keysym.sym] = false;
 			break;
 		}
@@ -344,6 +353,10 @@ int Game::event(const SDL_Event& event) {
 			break;
 		}
 		case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+			if (io.WantCaptureMouse) {
+				break;
+			}
+
 			if (event.button.windowID != SDL_GetWindowID(mWindow)) {
 				break;
 			}
@@ -352,14 +365,18 @@ int Game::event(const SDL_Event& event) {
 			touchEvent->type = TouchEvent::TYPE_MOUSE;
 			touchEvent->id = event.button.which;
 
-			touchEvent->x = event.button.x;
-			touchEvent->y = event.button.x;
+			touchEvent->position =
+			    Vector2(event.button.x, event.button.y);
 
 			mTouchEvents.emplace_back(touchEvent);
 			break;
 		}
 
 		case SDL_EVENT_MOUSE_BUTTON_UP: {
+			if (io.WantCaptureMouse) {
+				break;
+			}
+
 			for (auto iter = mTouchEvents.begin();
 			     iter != mTouchEvents.end(); iter++) {
 				if ((*iter)->id == event.button.which &&

@@ -5,15 +5,6 @@
 #include <cmath>
 #include <SDL3/SDL.h>
 
-typedef struct TouchEvent {
-	int x, y;
-	enum {
-		TYPE_MOUSE,
-		TYPE_FINGER
-	} type;
-	unsigned int id;
-} TouchEvent;
-
 // Warper functins just incase we change platforms
 namespace maths {
 	const float PI = 3.14159265358979323846;
@@ -155,5 +146,14 @@ class Vector2 {
 		return (a.x * b.x + a.y * b.y);
 	}
 };
+
+typedef struct TouchEvent {
+	class Vector2 position;
+	enum {
+		TYPE_MOUSE,
+		TYPE_FINGER
+	} type;
+	unsigned int id;
+} TouchEvent;
 
 #endif	// COMMON_HPP

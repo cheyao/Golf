@@ -10,6 +10,8 @@ class Ball : public Actor {
 
 	void updateActor(float delta) override;
 
+	class CircleComponent* getCircle() const { return mCircle; }
+
        private:
 	static const int mRadius = 50;
 	class CircleComponent* mCircle;

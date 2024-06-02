@@ -20,6 +20,7 @@ Ball::Ball(Game* game) : Actor(game) {
 
 	setForward(Vector2::normalize(Vector2(0.f, 0.f)));
 }
+
 void Ball::updateActor(float delta) {
 	(void) delta;
 

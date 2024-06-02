@@ -18,7 +18,7 @@ class Game {
 
 	int init();
 	int iterate();
-	int event(const SDL_Event& event);
+	int event(const SDL_Event& constEvent);
 
 	void addActor(class Actor* actor);
 	void removeActor(class Actor* actor);

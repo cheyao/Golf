@@ -31,7 +31,7 @@ class Game {
 	std::vector<class Hole*>& getHoles() { return mHoles; }
 
 	std::unordered_map<int, bool>& getKeyboard() { return mKeyboard; }
-	std::list<TouchEvent*>& getTouchEvents() { return mTouchEvents; }
+	Mouse& getMouse() { return mMouse; }
 
 	SDL_Texture* getTexture(const std::string& path) {
 		return mTextures[path];
@@ -64,7 +64,7 @@ class Game {
 	std::unordered_map<std::string, SDL_Texture*> mTextures;
 
 	std::unordered_map<int, bool> mKeyboard;
-	std::list<struct TouchEvent*> mTouchEvents;
+	Mouse mMouse;
 
 	std::string mBasePath;
 

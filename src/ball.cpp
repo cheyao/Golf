@@ -2,6 +2,7 @@
 
 #include "circleComponent.hpp"
 #include "common.hpp"
+#include "flingComponent.hpp"
 #include "game.hpp"
 #include "hole.hpp"
 #include "movementComponent.hpp"
@@ -13,10 +14,12 @@ Ball::Ball(Game* game) : Actor(game) {
 
 	MovementComponent* ballMouvement = new MovementComponent(this);
 	ballMouvement->setAngularSpeed(0.f);
-	ballMouvement->setForwardSpeed(0.f);
+	ballMouvement->setForwardSpeed(5.f);
 
 	mCircle = new CircleComponent(this);
 	mCircle->setRadius(50.f);
+
+	new FlingComponent(this);
 
 	setForward(Vector2::normalize(Vector2(0.f, 0.f)));
 }

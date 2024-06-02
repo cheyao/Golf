@@ -3,6 +3,7 @@
 #include "actor.hpp"
 #include "ball.hpp"
 #include "circleComponent.hpp"
+#include "common.hpp"
 #include "component.hpp"
 #include "game.hpp"
 #include "spriteComponent.hpp"
@@ -16,11 +17,29 @@ void FlingComponent::input() {
 		return;
 	}
 
-	/*
-	for (auto touch : mOwner->getGame()->getTouchEvents()) {
-	if (CircleComponent::intersect(ball->getCircle(), touch) {
-			}
-	}*/
+	Mouse& mouse = mOwner->getGame()->getMouse();
+
+	if (!mouse.captured && mouse.type == Mouse::BUTTON_STATE_LEFT &&
+	    !mSelected &&
+	    maths::nearZero(mOwner->getForward()
+				.lengthSquared()) &&  // Ball can't be moving
+	    CircleComponent::intersect(*(ball->getCircle()), mouse.position)) {
+		mSelected = true;
+		mouse.captured = true;
+	}
+
+	if (mSelected && mouse.type == Mouse::BUTTON_STATE_UP) {
+		// Released
+		mouse.captured = false;
+		mSelected = false;
+
+		float length =
+		    (mouse.position - mOwner->getPosition()).length();
+		Vector2 direction = mouse.position - mOwner->getPosition();
+		direction.normalize();
+
+		mOwner->setForward(direction * length);
+	}
 }
 
 void FlingComponent::draw(SDL_Renderer* renderer) {
@@ -34,9 +53,12 @@ void FlingComponent::draw(SDL_Renderer* renderer) {
 	}
 
 	Vector2 position = ball->getCircle()->getCenter();
-	float radius = ball->getCircle()->getRadius();
+	Vector2 mouse = mOwner->getGame()->getMouse().position;
+	// float radius = ball->getCircle()->getRadius();
 
-	SDL_RenderLine(renderer, position.x - radius, position.y,
-		       position.x + radius, position.y);
+	if (mSelected) {
+		SDL_RenderLine(renderer, position.x, position.y, mouse.x,
+			       mouse.y);
+	}
 }
 

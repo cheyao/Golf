@@ -2,61 +2,42 @@
 #define COMMON_HPP
 #pragma once
 
-#include <cmath>
 #include <SDL3/SDL.h>
+
+#include <cmath>
 
 // Warper functins just incase we change platforms
 namespace maths {
-	const float PI = 3.14159265358979323846;
+const float PI = 3.14159265358979323846;
 
-	inline float toRadians(float degrees) {
-		return degrees * (PI / 180.f);
-	}
+inline float toRadians(float degrees) { return degrees * (PI / 180.f); }
 
-	inline float toDegrees(float radians) {
-		return radians * (180.f / PI);
-	}
+inline float toDegrees(float radians) { return radians * (180.f / PI); }
 
-	inline float cos(float angle) {
-		return cosf(angle);
-	}
+inline float cos(float angle) { return cosf(angle); }
 
-	inline float sin(float angle) {
-		return sinf(angle);
-	}
+inline float sin(float angle) { return sinf(angle); }
 
-	inline float tan(float angle) {
-		return tanf(angle);
-	}
+inline float tan(float angle) { return tanf(angle); }
 
-	inline float arccos(float angle) {
-		return acosf(angle);
-	}
+inline float arccos(float angle) { return acosf(angle); }
 
-	inline float arcsin(float angle) {
-		return asinf(angle);
-	}
+inline float arcsin(float angle) { return asinf(angle); }
 
-	inline float arctan(float angle) {
-		return atanf(angle);
-	}
+inline float arctan(float angle) { return atanf(angle); }
 
-	inline float arctan2(float y, float x) {
-		return atan2(y, x); 
-	}
+inline float arctan2(float y, float x) { return atan2(y, x); }
 
-	inline float sqrt(float number) {
-		return sqrtf(number);
-	}
+inline float sqrt(float number) { return sqrtf(number); }
 
-	inline bool nearZero(float number, float epsilon = 0.001f) {
-		if (fabs(number) <= epsilon) {
-			return true;
-		} else {
-			return false;
-		}
+inline bool nearZero(float number, float epsilon = 0.001f) {
+	if (fabs(number) <= epsilon) {
+		return true;
+	} else {
+		return false;
 	}
 }
+}  // namespace maths
 
 class Vector2 {
        public:
@@ -92,6 +73,11 @@ class Vector2 {
 		y -= right.y;
 		return *this;
 	}
+	Vector2& operator-() {
+		x = -x;
+		y = -y;
+		return *this;
+	}
 
 	friend Vector2 operator*(const Vector2& a, const Vector2& b) {
 		return Vector2(a.x * b.x, a.y * b.y);
@@ -115,13 +101,9 @@ class Vector2 {
 		return *this;
 	}
 
-	float lengthSquared() const {
-		return (x * x + y * y);
-	}
+	float lengthSquared() const { return (x * x + y * y); }
 
-	float length() const {
-		return maths::sqrt(lengthSquared());
-	}
+	float length() const { return maths::sqrt(lengthSquared()); }
 
 	void normalize() {
 		float vectorLength = this->length();
@@ -147,13 +129,17 @@ class Vector2 {
 	}
 };
 
-typedef struct TouchEvent {
-	class Vector2 position;
-	enum {
-		TYPE_MOUSE,
-		TYPE_FINGER
+typedef struct Mouse {
+	enum type {
+		BUTTON_STATE_UP,
+		BUTTON_STATE_LEFT = 1,
+		BUTTON_STATE_MIDDLE,
+		BUTTON_STATE_RIGHT,
+		BUTTON_STATE_X1,
+		BUTTON_STATE_X2
 	} type;
-	unsigned int id;
+	class Vector2 position;
+	bool captured;	// Reserved by program, remember to free!
 } TouchEvent;
 
 #endif	// COMMON_HPP

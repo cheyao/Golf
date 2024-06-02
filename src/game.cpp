@@ -1,7 +1,6 @@
 #include "game.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_events.h>
 #include <SDL3_image/SDL_image.h>
 #include <stddef.h>
 
@@ -78,7 +77,7 @@ int Game::init() {
 
 	SDL_Log("The web window is %dx%d", mWindowWidth, mWindowHeight);
 #endif
-	mWindow = SDL_CreateWindow("TileMap", mWindowWidth, mWindowHeight,
+	mWindow = SDL_CreateWindow("Golf", mWindowWidth, mWindowHeight,
 				   SDL_WINDOW_RESIZABLE);
 	if (mWindow == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -136,6 +135,9 @@ int Game::init() {
 		}
 	}
 
+	// Reset mouse state 
+	mMouse.captured = false;
+
 	Ball* ball = new Ball(this);
 	ball->setPosition(Vector2(100.f, 100.f));
 
@@ -165,6 +167,9 @@ void Game::update() {
 		SDL_SetWindowSize(mWindow, mWindowWidth, mWindowHeight);
 	}
 #endif
+
+	// Update cursor position
+	SDL_GetMouseState(&mMouse.position.x, &mMouse.position.y);
 
 	// Update the game
 	float delta = (SDL_GetTicks() - mTicks) / 1000.0f;
@@ -230,7 +235,6 @@ void Game::gui() {
 			    (1000.f / io.Framerate), io.Framerate);
 		ImGui::Text("There are %zu actors", mActors.size());
 		ImGui::Text("There are %zu sprites", mSprites.size());
-		ImGui::Text("There are %zu touch events", mTouchEvents.size());
 
 		ImGui::End();
 	}
@@ -252,6 +256,8 @@ void Game::gui() {
 				}
 			}
 		}
+		
+		ImGui::Text("Mouse: %d captured: %d", mMouse.type, mMouse.captured);
 
 		ImGui::End();
 	}
@@ -265,6 +271,7 @@ void Game::draw() {
 
 	SDL_SetRenderDrawColor(mRenderer, 83, 252, 227, 255);
 	SDL_RenderClear(mRenderer);
+	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, 255);
 
 	for (auto& sprite : mSprites) {
 		sprite->draw(mRenderer);
@@ -349,6 +356,7 @@ int Game::event(const SDL_Event& constEvent) {
 			mWindowHeight = event.window.data2;
 			break;
 		}
+
 		case SDL_EVENT_MOUSE_BUTTON_DOWN: {
 			if (io.WantCaptureMouse) {
 				break;
@@ -358,14 +366,8 @@ int Game::event(const SDL_Event& constEvent) {
 				break;
 			}
 
-			TouchEvent* touchEvent = new TouchEvent;
-			touchEvent->type = TouchEvent::TYPE_MOUSE;
-			touchEvent->id = event.button.which;
-
-			touchEvent->position =
-			    Vector2(event.button.x, event.button.y);
-
-			mTouchEvents.emplace_back(touchEvent);
+			mMouse.type = static_cast<enum Mouse::type>(event.button.button);
+			mMouse.position = Vector2(event.button.x, event.button.y);
 			break;
 		}
 
@@ -374,15 +376,11 @@ int Game::event(const SDL_Event& constEvent) {
 				break;
 			}
 
-			for (auto iter = mTouchEvents.begin();
-			     iter != mTouchEvents.end(); iter++) {
-				if ((*iter)->id == event.button.which &&
-				    (*iter)->type == TouchEvent::TYPE_MOUSE) {
-					delete (*iter);
-					mTouchEvents.erase(iter);
-					break;
-				}
+			if (event.button.windowID != SDL_GetWindowID(mWindow)) {
+				break;
 			}
+
+			mMouse.type = Mouse::BUTTON_STATE_UP;
 			break;
 		}
 	}
@@ -466,10 +464,6 @@ Game::~Game() {
 
 	while (!mPendingActors.empty()) {
 		delete mActors.back();
-	}
-
-	while (!mTouchEvents.empty()) {
-		delete mTouchEvents.back();
 	}
 
 	for (auto& texture : mTextures) {

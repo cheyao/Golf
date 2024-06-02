@@ -1,8 +1,6 @@
 #include "game.hpp"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3_image/SDL_image.h>
 #include <stddef.h>
 
@@ -13,6 +11,7 @@
 
 #include "ball.hpp"
 #include "common.hpp"
+#include "hole.hpp"
 
 #ifdef IMGUI
 #include <backends/imgui_impl_sdl3.h>
@@ -23,8 +22,8 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten/html5.h>
 
+// Hacks to get browser width and hight
 EM_JS(int, browserHeight, (), { return window.innerHeight; });
-
 EM_JS(int, browserWidth, (), { return window.innerWidth; });
 #endif
 
@@ -67,6 +66,8 @@ int Game::init() {
 
 	// This hint is for ImGUI
 	SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "1");
 
 	// Create window and Renderer
 #ifdef __EMSCRIPTEN__
@@ -101,7 +102,9 @@ int Game::init() {
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+#ifdef __EMSCRIPTEN__
 	io.IniFilename = nullptr;
+#endif
 
 	ImGui::StyleColorsDark();
 
@@ -128,7 +131,11 @@ int Game::init() {
 		}
 	}
 
-	new Ball(this);
+	Ball* ball = new Ball(this);
+	ball->setPosition(Vector2(100.f, 100.f));
+
+	Hole* hole = new Hole(this);
+	hole->setPosition(Vector2(200.f, 200.f));
 
 	SDL_Log("Successfully initialized game\n");
 
@@ -186,7 +193,7 @@ void Game::update() {
 }
 
 #ifdef IMGUI
-// ImGUI private vars
+// ImGUI private vars: Bad code but why care when this is for debugging?
 bool statisticsMenu = false;
 bool debugMenu = false;
 
@@ -252,7 +259,7 @@ void Game::draw() {
 	ImGui::Render();
 #endif
 
-	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, 255);
+	SDL_SetRenderDrawColor(mRenderer, 83, 252, 227, 255);
 	SDL_RenderClear(mRenderer);
 
 	// Set to 1024*768
@@ -281,10 +288,9 @@ int Game::loadTexture(const std::string& textureName) {
 	if (texture == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to load texture: %s", IMG_GetError());
-		SDL_ShowSimpleMessageBox(
-		    SDL_MESSAGEBOX_ERROR, "ERROR!",
-		    "Failed to load one texture.",
-		    mWindow);
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR!",
+					 "Failed to load one texture.",
+					 mWindow);
 		return 1;
 	}
 
@@ -323,10 +329,6 @@ int Game::event(const SDL_Event& event) {
 		}
 
 		case SDL_EVENT_KEY_DOWN: {
-			if (event.key.keysym.sym == SDLK_ESCAPE) {
-				return 1;
-			}
-
 			mKeyboard[event.key.keysym.sym] = true;
 			break;
 		}
@@ -349,10 +351,11 @@ int Game::event(const SDL_Event& event) {
 			TouchEvent* touchEvent = new TouchEvent;
 			touchEvent->type = TouchEvent::TYPE_MOUSE;
 			touchEvent->id = event.button.which;
-			touchEvent->x = event.button.x * 1024 / mWindowWidth;
-			touchEvent->y = event.button.x * 1024 / mWindowHeight;
 
-			mTouchEvents.push_back(touchEvent);
+			touchEvent->x = event.button.x;
+			touchEvent->y = event.button.x;
+
+			mTouchEvents.emplace_back(touchEvent);
 			break;
 		}
 
@@ -424,6 +427,16 @@ void Game::removeSprite(SpriteComponent* sprite) {
 	}
 }
 
+void Game::addHole(class Hole* hole) { mHoles.emplace_back(hole); }
+
+void Game::removeHole(class Hole* hole) {
+	auto iter = std::find(mHoles.begin(), mHoles.end(), hole);
+
+	if (iter != mHoles.end()) {
+		mHoles.erase(iter);
+	}
+}
+
 Game::~Game() {
 	SDL_Log("Quitting game\n");
 
@@ -456,3 +469,4 @@ Game::~Game() {
 	IMG_Quit();
 	SDL_Quit();
 }
+

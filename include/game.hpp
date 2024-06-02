@@ -26,6 +26,13 @@ class Game {
 	void addSprite(class SpriteComponent* sprite);
 	void removeSprite(class SpriteComponent* sprite);
 
+	void addHole(class Hole* hole);
+	void removeHole(class Hole* hole);
+	std::vector<class Hole*>& getHoles() { return mHoles; }
+
+	std::unordered_map<int, bool>& getKeyboard() { return mKeyboard; }
+	std::list<TouchEvent*>& getTouchEvents() { return mTouchEvents; }
+
 	SDL_Texture* getTexture(const std::string& path) {
 		return mTextures[path];
 	}
@@ -54,11 +61,14 @@ class Game {
 
 	int mWindowWidth, mWindowHeight;
 
-	std::unordered_map<int, bool> mKeyboard;
 	std::unordered_map<std::string, SDL_Texture*> mTextures;
-	std::list<TouchEvent*> mTouchEvents;
+
+	std::unordered_map<int, bool> mKeyboard;
+	std::list<struct TouchEvent*> mTouchEvents;
 
 	std::string mBasePath;
+
+	std::vector<class Hole*> mHoles;
 };
 
 #endif	// GAME_HPP

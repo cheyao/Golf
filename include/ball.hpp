@@ -8,7 +8,11 @@ class Ball : public Actor {
        public:
 	explicit Ball(class Game* game);
 
+	void updateActor(float delta) override;
+
        private:
+	static const int mRadius = 50;
+	class CircleComponent* mCircle;
 };
 
 #endif

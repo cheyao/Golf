@@ -30,6 +30,7 @@ src/game.cpp
 src/component.cpp
 src/actor.cpp
 src/spriteComponent.cpp
+src/circleComponent.cpp
 src/movementComponent.cpp
 src/ball.cpp
 src/hole.cpp
@@ -39,6 +40,7 @@ include/common.hpp
 include/actor.hpp
 include/component.hpp
 include/spriteComponent.hpp
+include/circleComponent.hpp
 include/movementComponent.hpp
 include/ball.hpp
 include/hole.hpp
@@ -179,7 +181,7 @@ if(MSVC)
 	endif()
 else()
 	if(DEBUG)
-		target_compile_options(${BUILD_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -g)
+		target_compile_options(${BUILD_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -g -Og)
 		target_compile_options(${BUILD_NAME} PRIVATE -D_DEBUG)
 	else()
 		target_compile_options(${BUILD_NAME} PRIVATE -O3)

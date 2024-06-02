@@ -6,9 +6,13 @@
 
 class Hole : public Actor {
        public:
-	explicit Hole(class Game*);
+	explicit Hole(class Game* game);
+	~Hole();
+
+	class CircleComponent* getCircle() const { return mCircle; }
 
        private:
+	class CircleComponent* mCircle;
 };
 
 #endif	// HOLE_HPP

@@ -1,6 +1,6 @@
-#ifndef FLING_COMPONENT_HPP
-#define FLING_COMPONENT_HPP
 #pragma once
+
+#include <SDL3/SDL.h>
 
 #include "spriteComponent.hpp"
 
@@ -14,6 +14,4 @@ class FlingComponent : SpriteComponent {
        private:
 	bool mSelected;
 };
-
-#endif
 

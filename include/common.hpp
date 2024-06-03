@@ -1,5 +1,3 @@
-#ifndef COMMON_HPP
-#define COMMON_HPP
 #pragma once
 
 #include <SDL3/SDL.h>
@@ -142,4 +140,3 @@ typedef struct Mouse {
 	bool captured;	// Reserved by program, remember to free!
 } TouchEvent;
 
-#endif	// COMMON_HPP

@@ -1,5 +1,3 @@
-#ifndef MOVEMENT_COMPONENT_HPP
-#define MOVEMENT_COMPONENT_HPP
 #pragma once
 
 #include "component.hpp"
@@ -19,4 +17,3 @@ class MovementComponent : public Component {
 	float mForwardSpeed; // UPS
 };
 
-#endif	// MOVEMENT_COMPONENT_HPP

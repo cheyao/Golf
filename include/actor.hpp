@@ -1,5 +1,3 @@
-#ifndef ACTOR_HPP
-#define ACTOR_HPP
 #pragma once
 
 #include <vector>
@@ -52,4 +50,3 @@ class Actor {
 	class Game* mGame;
 };
 
-#endif	// ACTOR_HPP

@@ -1,13 +1,13 @@
 #include "movementComponent.hpp"
 
-#include "common.hpp"
+#include <SDL3/SDL.h>
+
 #include "actor.hpp"
+#include "common.hpp"
 #include "component.hpp"
 
 MovementComponent::MovementComponent(class Actor* owner, int updateOrder)
-    : Component(owner, updateOrder),
-      mAngularSpeed(0.f),
-      mForwardSpeed(100.f) {}
+    : Component(owner, updateOrder), mAngularSpeed(0.f), mForwardSpeed(100.f) {}
 
 void MovementComponent::update(float delta) {
 	if (!maths::nearZero(mAngularSpeed)) {

@@ -4,7 +4,6 @@
 #include "ball.hpp"
 #include "circleComponent.hpp"
 #include "common.hpp"
-#include "component.hpp"
 #include "game.hpp"
 #include "spriteComponent.hpp"
 
@@ -47,7 +46,7 @@ void FlingComponent::draw(SDL_Renderer* renderer) {
 		return;
 	}
 
-	Ball* ball = dynamic_cast<Ball*>(mOwner);
+	const Ball* const ball = dynamic_cast<Ball*>(mOwner);
 	if (ball == nullptr) {
 		return;
 	}
@@ -56,9 +55,6 @@ void FlingComponent::draw(SDL_Renderer* renderer) {
 	Vector2 mouse = mOwner->getGame()->getMouse().position;
 	// float radius = ball->getCircle()->getRadius();
 
-	if (mSelected) {
-		SDL_RenderLine(renderer, position.x, position.y, mouse.x,
-			       mouse.y);
-	}
+	SDL_RenderLine(renderer, position.x, position.y, mouse.x, mouse.y);
 }
 

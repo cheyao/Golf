@@ -1,5 +1,9 @@
 #include "ball.hpp"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "circleComponent.hpp"
 #include "common.hpp"
 #include "flingComponent.hpp"
@@ -25,14 +29,18 @@ Ball::Ball(Game* game) : Actor(game) {
 }
 
 void Ball::updateActor(float delta) {
-	(void) delta;
+	(void)delta;
 
-	for (auto hole : getGame()->getHoles()) {
-		if (CircleComponent::intersect(*(hole->getCircle()), *mCircle)) {
-			this->setState(STATE_DEAD);
-			hole->setState(STATE_DEAD);
-			break;
-		}
+	std::vector<Hole*>& holes = getGame()->getHoles();
+
+	auto iter =
+	    std::find_if(holes.begin(), holes.end(), [=](const Hole* hole) {
+		    return CircleComponent::intersect(*mCircle,
+						      *(hole->getCircle()));
+	    });
+	if (iter != holes.end()) {
+		this->setState(STATE_DEAD);
+		(*iter)->setState(STATE_DEAD);
 	}
 }
 

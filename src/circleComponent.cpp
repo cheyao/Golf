@@ -4,7 +4,7 @@
 #include "common.hpp"
 #include "component.hpp"
 
-CircleComponent::CircleComponent(class Actor* owner) : Component(owner) {}
+CircleComponent::CircleComponent(class Actor* owner) : Component(owner), mRadius(50.f) {}
 
 float CircleComponent::getRadius() const {
 	return mRadius * mOwner->getScale();

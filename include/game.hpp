@@ -1,10 +1,7 @@
-#ifndef GAME_HPP
-#define GAME_HPP
 #pragma once
 
 #include <SDL3/SDL.h>
 
-#include <list>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -38,8 +35,8 @@ class Game {
 	}
 
 	// No copy
-	Game(Game const&) = delete;
-	void operator=(Game const& x) = delete;
+	Game(const Game&) = delete;
+	Game& operator=(const Game& x) = delete;
 
        private:
 	void input();
@@ -71,4 +68,3 @@ class Game {
 	std::vector<class Hole*> mHoles;
 };
 
-#endif	// GAME_HPP

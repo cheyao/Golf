@@ -38,6 +38,7 @@ Game::Game()
       mUpdatingActors(false),
       mWindowWidth(1024),
       mWindowHeight(768),
+      mMouse(),
       mBasePath("") {}
 
 int Game::init() {
@@ -135,7 +136,7 @@ int Game::init() {
 		}
 	}
 
-	// Reset mouse state 
+	// Reset mouse state
 	mMouse.captured = false;
 
 	Ball* ball = new Ball(this);
@@ -256,8 +257,9 @@ void Game::gui() {
 				}
 			}
 		}
-		
-		ImGui::Text("Mouse: %d captured: %d", mMouse.type, mMouse.captured);
+
+		ImGui::Text("Mouse: %d captured: %d", mMouse.type,
+			    mMouse.captured);
 
 		ImGui::End();
 	}
@@ -317,19 +319,25 @@ int Game::event(const SDL_Event& constEvent) {
 
 #ifdef IMGUI
 	ImGui_ImplSDL3_ProcessEvent(&event);
+	const ImGuiIO& io = ImGui::GetIO();
+#else
+	// Voiding out all the expressions
+	union {
+		bool WantCaptureMouse = false;
+		bool WantCaptureKeyboard;
+	} io;
 #endif
 
-	ImGuiIO& io = ImGui::GetIO();
 	switch (event.type) {
 		case SDL_EVENT_QUIT: {
 			return 1;
-			break;
 		}
 
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
 			if (event.window.windowID == SDL_GetWindowID(mWindow)) {
 				return 1;
 			}
+
 			break;
 		}
 
@@ -366,8 +374,10 @@ int Game::event(const SDL_Event& constEvent) {
 				break;
 			}
 
-			mMouse.type = static_cast<enum Mouse::type>(event.button.button);
-			mMouse.position = Vector2(event.button.x, event.button.y);
+			mMouse.type =
+			    static_cast<enum Mouse::type>(event.button.button);
+			mMouse.position =
+			    Vector2(event.button.x, event.button.y);
 			break;
 		}
 

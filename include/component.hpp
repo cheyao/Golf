@@ -1,5 +1,3 @@
-#ifndef COMPONENT_HPP
-#define COMPONENT_HPP
 #pragma once
 
 class Component {
@@ -19,4 +17,3 @@ class Component {
 	int mUpdateOrder;
 };
 
-#endif	// COMPONENT_HPP

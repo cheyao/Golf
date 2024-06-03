@@ -24,8 +24,8 @@ void MovementComponent::update(float delta) {
 			position.x = 50;
 			forwardVec.x = -forwardVec.x;
 		}
-		if (position.x > 992) {
-			position.x = 992;
+		if (position.x > 984) {
+			position.x = 984;
 			forwardVec.x = -forwardVec.x;
 		}
 		if (position.y < 50) {

@@ -173,8 +173,13 @@ endif()
 
 # Strip debug symbols
 if(NOT DEBUG AND NOT ANDROID AND NOT EMSCRIPTEN)
-	add_custom_command(TARGET ${BUILD_NAME} POST_BUILD
-		COMMAND ${CMAKE_STRIP} ${BUILD_NAME})
+	if (WINDOWS)
+		add_custom_command(TARGET ${BUILD_NAME} POST_BUILD
+			COMMAND ${CMAKE_STRIP} ${BUILD_NAME}.exe)
+	else()
+		add_custom_command(TARGET ${BUILD_NAME} POST_BUILD
+			COMMAND ${CMAKE_STRIP} ${BUILD_NAME})
+	endif()
 endif()
 
 # Set flags

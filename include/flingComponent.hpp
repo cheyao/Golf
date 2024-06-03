@@ -5,7 +5,7 @@
 #include "common.hpp"
 #include "spriteComponent.hpp"
 
-class FlingComponent : SpriteComponent {
+class FlingComponent : public SpriteComponent {
        public:
 	explicit FlingComponent(class Actor* owner);
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "You need to have patchelf installed"
 
-OUTPUT_NAME=TileMap
+OUTPUT_NAME=Golf
 
 mkdir output
 
@@ -56,6 +56,7 @@ unset CFLAGS
 unset CXXFLAGS
 
 cp cmake/linux-launcher output/${OUTPUT_NAME}
+sed -i "s/PROJECT_NAME/${OUTPUT_NAME}/g" output/${OUTPUT_NAME}
 
 rm -rf build32
 rm -rf build64

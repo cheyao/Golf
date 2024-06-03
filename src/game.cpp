@@ -70,6 +70,7 @@ int Game::init() {
 
 	// This hint is for ImGUI
 	SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+	SDL_SetHint(SDL_HINT_RENDER_LINE_METHOD, "2");
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "1");
 

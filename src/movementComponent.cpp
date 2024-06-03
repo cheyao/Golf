@@ -16,10 +16,30 @@ void MovementComponent::update(float delta) {
 
 	if (!maths::nearZero(mForwardSpeed)) {
 		Vector2 position = mOwner->getPosition();
+		Vector2 forwardVec = mOwner->getForward();
 		position += mOwner->getForward() * mForwardSpeed * delta;
+
+		// Clip to window bounds
+		if (position.x < 50) {
+			position.x = 50;
+			forwardVec.x = -forwardVec.x;
+		}
+		if (position.x > 992) {
+			position.x = 992;
+			forwardVec.x = -forwardVec.x;
+		}
+		if (position.y < 50) {
+			position.y = 50;
+			forwardVec.y = -forwardVec.y;
+		}
+		if (position.y > 718) {
+			position.y = 718;
+			forwardVec.y = -forwardVec.y;
+		}
+
 		mOwner->setPosition(position);
 
-		mOwner->setForward(mOwner->getForward() * 0.97f);
+		mOwner->setForward(forwardVec * 0.97f);
 	}
 }
 

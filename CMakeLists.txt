@@ -14,12 +14,14 @@ option(CLANG_TIDY 	"Run clang tidy" OFF)
 option(CPPCHECK 	"Run cppcheck" OFF)
 option(IMGUI 		"Include GUI" OFF)
 option(TRACY 		"Include Tracy" OFF)
+option(SANITIZE 	"Use address sanitizer" OFF)
 #CMAKE_BUILD_TYPE Release Debug
 
 if(CHECKS STREQUAL ON)
 	set(IWYU ON)
 	set(CLANG_TIDY ON)
 	set(CPPCHECK ON)
+	set(SANITIZE ON)
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
@@ -76,9 +78,6 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
 	message("Debug enabled")
 	set(DEBUG TRUE)
 	set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-	if(NOT CHECKS STREQUAL ON)
-		set(IMGUI ON)
-	endif()
 endif()
 
 #Check platform
@@ -173,7 +172,7 @@ else()
 endif()
 
 # Strip debug symbols
-if(NOT DEBUG AND NOT ANDROID)
+if(NOT DEBUG AND NOT ANDROID AND NOT EMSCRIPTEN)
 	add_custom_command(TARGET ${BUILD_NAME} POST_BUILD
 		COMMAND ${CMAKE_STRIP} ${BUILD_NAME})
 endif()
@@ -189,10 +188,10 @@ if(MSVC)
 	endif()
 else()
 	if(DEBUG)
-		target_compile_options(${BUILD_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -g -Og -ffast-math)
+		target_compile_options(${BUILD_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -g -Og)
 		target_compile_definitions(${BUILD_NAME} PRIVATE -D_DEBUG)
 	else()
-		target_compile_options(${BUILD_NAME} PRIVATE -O3)
+		target_compile_options(${BUILD_NAME} PRIVATE -O3 -ffast-math)
 		target_compile_definitions(${BUILD_NAME} PRIVATE -DNDEBUG)
 	endif()
 endif()
@@ -268,8 +267,8 @@ endif()
 #Sanitize
 if(SANITIZE STREQUAL ON)
 	message("Sanitizer emabled")
-	target_compile_options(-fsanitize=address)
-	target_link_options(-fsanitize=address)
+	target_compile_options(${BUILD_NAME} PRIVATE -fsanitize=address -g -fno-omit-frame-pointer -O0)
+	target_link_options(${BUILD_NAME} PRIVATE -fsanitize=address -g -O0)
 endif()
 
 #do LTO

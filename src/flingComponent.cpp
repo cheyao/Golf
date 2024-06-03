@@ -21,7 +21,7 @@ void FlingComponent::input() {
 	if (!mouse.captured && mouse.type == Mouse::BUTTON_STATE_LEFT &&
 	    !mSelected &&
 	    maths::nearZero(mOwner->getForward().lengthSquared(),
-			    0.1f) &&  // Ball can't be moving
+			    0.2f) &&  // Ball can't be moving
 	    CircleComponent::intersect(*(ball->getCircle()), mouse.position)) {
 		mSelected = true;
 		mouse.captured = true;

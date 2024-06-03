@@ -21,8 +21,7 @@ void MovementComponent::update(float delta) {
 		position += mOwner->getForward() * mForwardSpeed * delta;
 		mOwner->setPosition(position);
 
-		mOwner->setForward(mOwner->getForward() * 0.99);
-		SDL_Log("Speed: %f", mOwner->getForward().length());
+		mOwner->setForward(mOwner->getForward() * 0.97f);
 	}
 }
 

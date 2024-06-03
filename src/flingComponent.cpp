@@ -8,7 +8,7 @@
 #include "spriteComponent.hpp"
 
 FlingComponent::FlingComponent(Actor* owner)
-    : SpriteComponent(owner, 101), mSelected(false) {}
+    : SpriteComponent(owner, 101), mSelected(false), mOrigin() {}
 
 void FlingComponent::input() {
 	Ball* ball = dynamic_cast<Ball*>(mOwner);
@@ -20,11 +20,12 @@ void FlingComponent::input() {
 
 	if (!mouse.captured && mouse.type == Mouse::BUTTON_STATE_LEFT &&
 	    !mSelected &&
-	    maths::nearZero(mOwner->getForward()
-				.lengthSquared()) &&  // Ball can't be moving
+	    maths::nearZero(mOwner->getForward().lengthSquared(),
+			    0.1f) &&  // Ball can't be moving
 	    CircleComponent::intersect(*(ball->getCircle()), mouse.position)) {
 		mSelected = true;
 		mouse.captured = true;
+		mOrigin = mouse.position;
 	}
 
 	if (mSelected && mouse.type == Mouse::BUTTON_STATE_UP) {
@@ -32,9 +33,11 @@ void FlingComponent::input() {
 		mouse.captured = false;
 		mSelected = false;
 
-		float length =
-		    (mouse.position - mOwner->getPosition()).length();
-		Vector2 direction = mouse.position - mOwner->getPosition();
+		float length = (mouse.position - mOrigin).length();
+		if (length > mMaxLength) {
+			length = mMaxLength;  // Not too long
+		}
+		Vector2 direction = mouse.position - mOrigin;
 		direction.normalize();
 
 		mOwner->setForward(direction * length);
@@ -51,10 +54,14 @@ void FlingComponent::draw(SDL_Renderer* renderer) {
 		return;
 	}
 
-	Vector2 position = ball->getCircle()->getCenter();
 	Vector2 mouse = mOwner->getGame()->getMouse().position;
 	// float radius = ball->getCircle()->getRadius();
+	if ((mouse - mOrigin).lengthSquared() > (mMaxLength * mMaxLength)) {
+		Vector2 normalized = mouse - mOrigin;
+		normalized.normalize();
+		mouse = mOrigin + -(normalized * mMaxLength);
+	}
 
-	SDL_RenderLine(renderer, position.x, position.y, mouse.x, mouse.y);
+	SDL_RenderLine(renderer, mOrigin.x, mOrigin.y, mouse.x, mouse.y);
 }
 

@@ -1,10 +1,13 @@
 #include "game.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_render.h>
 #include <SDL3_image/SDL_image.h>
 #include <stddef.h>
 
 #include <algorithm>
+#include <cstdlib>
+#include <ctime>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -42,6 +45,9 @@ Game::Game()
       mBasePath("") {}
 
 int Game::init() {
+	std::srand(std::time(nullptr) *
+		   2);	// People always use srand(time()); so why not *2 for
+			// more randomness?
 	SDL_Log("Initializing game\n");
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_TIMER)) {
@@ -50,7 +56,7 @@ int Game::init() {
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR!",
 					 "Failed to initialize SDL, there is "
 					 "something wrong with your system",
-					 NULL);
+					 nullptr);
 		return 1;
 	}
 
@@ -61,7 +67,7 @@ int Game::init() {
 		    SDL_MESSAGEBOX_ERROR, "ERROR!",
 		    "Failed to initialize SDL_image, there is "
 		    "something wrong with your system",
-		    NULL);
+		    nullptr);
 		return 1;
 	}
 
@@ -86,7 +92,7 @@ int Game::init() {
 		return 1;
 	}
 
-	mRenderer = SDL_CreateRenderer(mWindow, NULL);
+	mRenderer = SDL_CreateRenderer(mWindow, nullptr);
 	if (mRenderer == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
 			     "Failed to create renderer: %s", SDL_GetError());
@@ -122,7 +128,7 @@ int Game::init() {
 	mTicks = SDL_GetTicks();
 
 	char* basepath = SDL_GetBasePath();
-	if (basepath != NULL) {
+	if (basepath != nullptr) {
 		mBasePath += basepath;
 		SDL_free(basepath);  // We gotta free da pointer UwU
 	}
@@ -139,11 +145,7 @@ int Game::init() {
 	// Reset mouse state
 	mMouse.captured = false;
 
-	Ball* ball = new Ball(this);
-	ball->setPosition(Vector2(100.f, 100.f));
-
-	Hole* hole = new Hole(this);
-	hole->setPosition(Vector2(200.f, 200.f));
+	new Ball(this);
 
 	SDL_Log("Successfully initialized game\n");
 	return 0;
@@ -171,6 +173,9 @@ void Game::update() {
 
 	// Update cursor position
 	SDL_GetMouseState(&mMouse.position.x, &mMouse.position.y);
+	SDL_RenderCoordinatesFromWindow(mRenderer, mMouse.position.x,
+					mMouse.position.y, &mMouse.position.x,
+					&mMouse.position.y);
 
 	// Update the game
 	float delta = (SDL_GetTicks() - mTicks) / 1000.0f;
@@ -184,7 +189,14 @@ void Game::update() {
 	for (auto& actor : mActors) {
 		actor->update(delta);
 	}
-	mUpdatingActors = false;  // Append the pending actors
+	mUpdatingActors = false;  
+
+	// If no ball, add a ball
+	if (mActors.empty()) {
+		new Ball(this);
+	}
+
+	// Append the pending actors
 	std::copy(mPendingActors.begin(), mPendingActors.end(),
 		  std::back_inserter(mActors));
 	mPendingActors.clear();
@@ -206,6 +218,7 @@ void Game::update() {
 // ImGUI private vars: Bad code but why care when this is for debugging?
 bool statisticsMenu = false;
 bool debugMenu = false;
+bool demoMenu = false;
 
 float mScale = 1.f;
 float x = 100, y = 100;
@@ -224,8 +237,13 @@ void Game::gui() {
 
 		ImGui::Checkbox("Statistics", &statisticsMenu);
 		ImGui::Checkbox("Debug", &debugMenu);
+		ImGui::Checkbox("Demo", &demoMenu);
 
 		ImGui::End();
+	}
+
+	if (demoMenu) {
+		ImGui::ShowDemoWindow(&demoMenu);
 	}
 
 	if (statisticsMenu) {
@@ -477,7 +495,7 @@ Game::~Game() {
 	}
 
 	for (auto& texture : mTextures) {
-		if (texture.second != NULL) {
+		if (texture.second != nullptr) {
 			SDL_DestroyTexture(texture.second);
 		}
 	}

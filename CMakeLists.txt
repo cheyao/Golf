@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(Golf CXX)
 #CXX standards
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -51,6 +51,7 @@ include/hole.hpp
 set(IMGUI_SRC
 # ImGUI 
 external/imgui/imgui.cpp
+external/imgui/imgui_demo.cpp
 external/imgui/imgui_draw.cpp
 external/imgui/imgui_tables.cpp
 external/imgui/imgui_widgets.cpp
@@ -171,6 +172,11 @@ else()
 	target_link_libraries(${BUILD_NAME} PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
 endif()
 
+# Strip debug symbols
+if(NOT DEBUG AND NOT ANDROID)
+	add_custom_command(TARGET ${BUILD_NAME} POST_BUILD
+		COMMAND ${CMAKE_STRIP} ${BUILD_NAME})
+endif()
 
 # Set flags
 if(MSVC)
@@ -183,8 +189,8 @@ if(MSVC)
 	endif()
 else()
 	if(DEBUG)
-		target_compile_options(${BUILD_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -g -Og)
-		target_compile_options(${BUILD_NAME} PRIVATE -D_DEBUG)
+		target_compile_options(${BUILD_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -g -Og -ffast-math)
+		target_compile_definitions(${BUILD_NAME} PRIVATE -D_DEBUG)
 	else()
 		target_compile_options(${BUILD_NAME} PRIVATE -O3)
 		target_compile_definitions(${BUILD_NAME} PRIVATE -DNDEBUG)
@@ -202,9 +208,9 @@ if(IMGUI STREQUAL ON AND CHECKS STREQUAL OFF)
 	include_directories(external/imgui)
 
 	if(MSVC)
-		target_compile_options(${BUILD_NAME} PRIVATE /DIMGUI)
+		target_compile_definitions(${BUILD_NAME} PRIVATE /DIMGUI)
 	else()
-		target_compile_options(${BUILD_NAME} PRIVATE -DIMGUI)
+		target_compile_definitions(${BUILD_NAME} PRIVATE -DIMGUI)
 	endif()
 endif()
 
@@ -220,9 +226,9 @@ if(TRACY STREQUAL ON)
 	include_directories(external/tracy/public/tracy)
 
 	if(MSVC)
-		target_compile_options(${BUILD_NAME} PRIVATE /DTRACY)
+		target_compile_definitions(${BUILD_NAME} PRIVATE /DTRACY)
 	else()
-		target_compile_options(${BUILD_NAME} PRIVATE -DTRACY)
+		target_compile_definitions(${BUILD_NAME} PRIVATE -DTRACY)
 	endif()
 else()
 	include_directories(external/tr)

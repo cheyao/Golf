@@ -9,6 +9,10 @@ class Hole : public Actor {
 
 	class CircleComponent* getCircle() const { return mCircle; }
 
+	// No copy
+	Hole(const Hole&) = delete;
+	Hole& operator=(const Hole& x) = delete;
+
        private:
 	class CircleComponent* mCircle;
 };

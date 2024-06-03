@@ -1,5 +1,7 @@
 #include "hole.hpp"
 
+#include <string>
+
 #include "actor.hpp"
 #include "circleComponent.hpp"
 #include "game.hpp"
@@ -15,7 +17,5 @@ Hole::Hole(Game* game) : Actor(game) {
 	mCircle->setRadius(50.f);
 }
 
-Hole::~Hole() {
-	getGame()->removeHole(this);
-}
+Hole::~Hole() { getGame()->removeHole(this); }
 

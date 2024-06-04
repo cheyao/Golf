@@ -17,7 +17,6 @@ void FlingComponent::input() {
 	}
 
 	Mouse& mouse = mOwner->getGame()->getMouse();
-
 	if (!mouse.captured && mouse.type == Mouse::BUTTON_STATE_LEFT &&
 	    !mSelected &&
 	    maths::nearZero(mOwner->getForward().lengthSquared(),
@@ -41,6 +40,10 @@ void FlingComponent::input() {
 		direction.normalize();
 
 		mOwner->setForward(direction * length);
+	}
+
+	if (mSelected) {
+		mOwner->getGame()->redraw();
 	}
 }
 

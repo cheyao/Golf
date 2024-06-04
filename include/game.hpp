@@ -38,6 +38,8 @@ class Game {
 	Game(const Game&) = delete;
 	Game& operator=(const Game& x) = delete;
 
+	void redraw() { mRedraw = true; }
+
        private:
 	void input();
 	void update();
@@ -66,5 +68,7 @@ class Game {
 	std::string mBasePath;
 
 	std::vector<class Hole*> mHoles;
+
+	bool mRedraw;
 };
 

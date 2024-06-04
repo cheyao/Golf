@@ -39,7 +39,8 @@ Game::Game()
       mWindowWidth(1024),
       mWindowHeight(768),
       mMouse(),
-      mBasePath("") {}
+      mBasePath(""),
+      mRedraw(true) {}
 
 int Game::init() {
 	std::srand(std::time(nullptr) *
@@ -192,6 +193,8 @@ void Game::update() {
 	// If no ball, add a ball
 	if (mActors.empty()) {
 		new Ball(this);
+
+		redraw();
 	}
 
 	// Append the pending actors
@@ -285,6 +288,12 @@ void Game::gui() {
 void Game::draw() {
 #ifdef IMGUI
 	ImGui::Render();
+#else
+	// Optimize!
+	if (!mRedraw) {
+		return;
+	}
+	mRedraw = false;
 #endif
 
 	SDL_SetRenderDrawColor(mRenderer, 83, 252, 227, 255);

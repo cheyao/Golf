@@ -3,6 +3,7 @@
 #include "actor.hpp"
 #include "common.hpp"
 #include "component.hpp"
+#include "game.hpp"
 
 MovementComponent::MovementComponent(class Actor* owner, int updateOrder)
     : Component(owner, updateOrder), mAngularSpeed(0.f), mForwardSpeed(100.f) {}
@@ -14,9 +15,9 @@ void MovementComponent::update(float delta) {
 		mOwner->setRotation(rotation);
 	}
 
-	if (!maths::nearZero(mForwardSpeed)) {
+	Vector2 forwardVec = mOwner->getForward();
+	if (!maths::nearZero(forwardVec.length(), 0.1)) {
 		Vector2 position = mOwner->getPosition();
-		Vector2 forwardVec = mOwner->getForward();
 		position += mOwner->getForward() * mForwardSpeed * delta;
 
 		// Clip to window bounds
@@ -40,6 +41,8 @@ void MovementComponent::update(float delta) {
 		mOwner->setPosition(position);
 
 		mOwner->setForward(forwardVec * 0.97f);
+
+		mOwner->getGame()->redraw();
 	}
 }
 

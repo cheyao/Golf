@@ -19,7 +19,7 @@ mv ${OUTPUT_NAME} ../output/${OUTPUT_NAME}64
 mv assets ../output/
 cd ../output/
 mkdir lib64
-patchelf --set-rpath lib64 ${OUTPUT_NAME}64
+patchelf --set-rpath '$ORIGIN/lib64' ${OUTPUT_NAME}64
 
 cp ${SDL_DIR}/libSDL3.so.0 lib64
 cp ${SDL_DIR}/libSDL3_image.so.0 lib64
@@ -44,7 +44,7 @@ cmake --build . -- -j 4
 mv ${OUTPUT_NAME} ../output/${OUTPUT_NAME}32
 cd ../output/
 mkdir lib32
-patchelf --set-rpath lib32 ${OUTPUT_NAME}32
+patchelf --set-rpath '$ORIGIN/lib32' ${OUTPUT_NAME}32
 
 cp ${SDL_DIR}/libSDL3.so.0 lib32
 cp ${SDL_DIR}/libSDL3_image.so.0 lib32
